@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		CB173CF02CB72909002A96CB /* pj11App.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB173CEF2CB72909002A96CB /* pj11App.swift */; };
 		CB173CF22CB72909002A96CB /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB173CF12CB72909002A96CB /* ContentView.swift */; };
 		CB173CF42CB72913002A96CB /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CB173CF32CB72913002A96CB /* Assets.xcassets */; };
 		CB173CF72CB72913002A96CB /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CB173CF62CB72913002A96CB /* Preview Assets.xcassets */; };
@@ -35,7 +34,6 @@
 
 /* Begin PBXFileReference section */
 		CB173CEC2CB72909002A96CB /* pj11.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = pj11.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		CB173CEF2CB72909002A96CB /* pj11App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = pj11App.swift; sourceTree = "<group>"; };
 		CB173CF12CB72909002A96CB /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		CB173CF32CB72913002A96CB /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		CB173CF62CB72913002A96CB /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
@@ -94,7 +92,6 @@
 		CB173CEE2CB72909002A96CB /* pj11 */ = {
 			isa = PBXGroup;
 			children = (
-				CB173CEF2CB72909002A96CB /* pj11App.swift */,
 				CB173CF12CB72909002A96CB /* ContentView.swift */,
 				CB173CF32CB72913002A96CB /* Assets.xcassets */,
 				CB173CF52CB72913002A96CB /* Preview Content */,
@@ -258,7 +255,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				CB173CF22CB72909002A96CB /* ContentView.swift in Sources */,
-				CB173CF02CB72909002A96CB /* pj11App.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
