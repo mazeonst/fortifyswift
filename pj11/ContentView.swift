@@ -349,8 +349,8 @@ struct LoginView: View {
                             .fontWeight(.bold)
                             .padding()
                             .frame(maxWidth: .infinity)
-                            .background(Color(UIColor.systemBlue)) // Динамический цвет для кнопки
-                            .foregroundColor(Color(UIColor.systemBackground)) // Динамический цвет для текста кнопки
+                            .background(Color.blue.opacity(0.2))
+                            .foregroundColor(.blue)
                             .cornerRadius(12)
                             .shadow(radius: 5)
                     }
@@ -648,10 +648,10 @@ struct SavePasswordView: View {
                 }) {
                     Text("Сохранить")
                         .fontWeight(.bold)
-                        .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.blue)
-                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .background(Color.blue.opacity(0.2))
+                        .foregroundColor(.blue)
                         .cornerRadius(12)
                         .shadow(radius: 5)
                         .padding([.leading, .trailing], 20)

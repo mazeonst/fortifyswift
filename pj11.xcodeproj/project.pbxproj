@@ -13,6 +13,7 @@
 		CB173D012CB72913002A96CB /* pj11Tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB173D002CB72913002A96CB /* pj11Tests.swift */; };
 		CB173D0B2CB72913002A96CB /* pj11UITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB173D0A2CB72913002A96CB /* pj11UITests.swift */; };
 		CB173D0D2CB72913002A96CB /* pj11UITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB173D0C2CB72913002A96CB /* pj11UITestsLaunchTests.swift */; };
+		CBAABF9D2CC97F22009D96C1 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = CBAABF9C2CC97F22009D96C1 /* Localizable.xcstrings */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -43,6 +44,7 @@
 		CB173D0A2CB72913002A96CB /* pj11UITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = pj11UITests.swift; sourceTree = "<group>"; };
 		CB173D0C2CB72913002A96CB /* pj11UITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = pj11UITestsLaunchTests.swift; sourceTree = "<group>"; };
 		CB9119042CBC352B00ACA314 /* Article.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = Article.md; sourceTree = "<group>"; };
+		CBAABF9C2CC97F22009D96C1 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -97,6 +99,7 @@
 				CB173CF32CB72913002A96CB /* Assets.xcassets */,
 				CB173CF52CB72913002A96CB /* Preview Content */,
 				CB9119042CBC352B00ACA314 /* Article.md */,
+				CBAABF9C2CC97F22009D96C1 /* Localizable.xcstrings */,
 			);
 			path = pj11;
 			sourceTree = "<group>";
@@ -212,6 +215,7 @@
 			knownRegions = (
 				en,
 				Base,
+				ru,
 			);
 			mainGroup = CB173CE32CB72909002A96CB;
 			productRefGroup = CB173CED2CB72909002A96CB /* Products */;
@@ -232,6 +236,7 @@
 			files = (
 				CB173CF72CB72913002A96CB /* Preview Assets.xcassets in Resources */,
 				CB173CF42CB72913002A96CB /* Assets.xcassets in Resources */,
+				CBAABF9D2CC97F22009D96C1 /* Localizable.xcstrings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
