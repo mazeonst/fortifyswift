@@ -97,64 +97,93 @@ struct WelcomeView: View {
     @State private var showSeedPhrase = false
     @State private var seedPhrase: String = ""
     @State private var showLoginView = false
+    @State private var isAnimating = false
+    @State private var currentSloganIndex = 0 // Для отслеживания текущего слогана
+
+    let slogans = [
+        "Генерация сложных паролей",
+        "Безопасный менеджмент паролей",
+        "Удобство хранения"
+    ]
 
     var body: some View {
-            VStack {
-                Spacer()
+        VStack {
+            Spacer()
 
-                Text("Добро пожаловать!")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                    .foregroundColor(.primary)
-
-                Spacer()
-
-                Button(action: {
-                    registerUser()
-                }) {
-                    Text("Регистрация")
-                        .fontWeight(.bold)
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(Color.gray.opacity(0.2))
-                        .foregroundColor(.blue)
-                        .cornerRadius(12)
-                        .shadow(radius: 5)
+            // Название приложения Fortify с технологичным шрифтом
+            Text("Fortify")
+                .font(.system(size: 44, weight: .heavy, design: .rounded)) // Технологичный и жирный шрифт
+                .foregroundColor(.blue)
+                .padding(.bottom, 10)
+                .scaleEffect(isAnimating ? 1 : 0.9)
+                .opacity(isAnimating ? 1 : 0.7)
+                .animation(Animation.easeInOut(duration: 0.6).repeatForever(autoreverses: true), value: isAnimating)
+                .onAppear {
+                    isAnimating = true
                 }
-                .padding(.horizontal)
-                .padding(.bottom, 10) // Уменьшили нижний отступ между кнопками
 
-                Button(action: {
-                    showLoginView = true
-                }) {
-                    Text("Вход")
-                        .fontWeight(.bold)
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(Color.gray.opacity(0.2))
-                        .foregroundColor(.blue)
-                        .cornerRadius(12)
-                        .shadow(radius: 5)
+            // Слоганы с анимацией, расположены по центру
+            ZStack {
+                ForEach(0..<slogans.count, id: \.self) { index in
+                    AnimatedSloganView(text: slogans[index], index: index, currentSloganIndex: $currentSloganIndex)
                 }
-                .padding(.horizontal)
-
-                Spacer()
-
-                Text("сид фраза восстановлению не подлежит")
-                    .font(.caption)
-                    .foregroundColor(.gray)
-
-                Spacer()
             }
-            .padding()
-            .sheet(isPresented: $showSeedPhrase) {
-                SeedPhraseView(seedPhrase: $seedPhrase)
+            .frame(height: UIScreen.main.bounds.height * 0.3)
+            .onAppear {
+                startSloganRotation()
             }
-            .sheet(isPresented: $showLoginView) {
-                LoginView()
+
+            Spacer()
+
+            // Кнопка "Регистрация"
+            Button(action: {
+                registerUser()
+            }) {
+                Text("Регистрация")
+                    .font(.system(size: 20, weight: .bold, design: .rounded)) // Стильный и жирный шрифт
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .background(LinearGradient(gradient: Gradient(colors: [Color.blue.opacity(0.8), Color.blue.opacity(0.5)]), startPoint: .top, endPoint: .bottom))
+                    .foregroundColor(.white)
+                    .cornerRadius(15)
+                    .shadow(color: Color.blue.opacity(0.5), radius: 10, x: 0, y: 5)
+                    .scaleEffect(isAnimating ? 1.05 : 1)
             }
+            .padding(.horizontal)
+            .padding(.bottom, 20)
+            .animation(.easeInOut(duration: 0.2), value: isAnimating)
+
+            // Кнопка "Вход"
+            Button(action: {
+                showLoginView = true
+            }) {
+                Text("Вход")
+                    .font(.system(size: 20, weight: .bold, design: .rounded)) // Технологичный и современный шрифт
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .background(LinearGradient(gradient: Gradient(colors: [Color.green.opacity(0.8), Color.green.opacity(0.5)]), startPoint: .top, endPoint: .bottom))
+                    .foregroundColor(.white)
+                    .cornerRadius(15)
+                    .shadow(color: Color.green.opacity(0.5), radius: 10, x: 0, y: 5)
+                    .scaleEffect(isAnimating ? 1.05 : 1)
+            }
+            .padding(.horizontal)
+            .padding(.bottom, 40)
+            .animation(.easeInOut(duration: 0.2), value: isAnimating)
+
+            Spacer()
         }
-
+        .padding()
+        .background(LinearGradient(gradient: Gradient(colors: [Color.white, Color.blue.opacity(0.1)]), startPoint: .top, endPoint: .bottom)) // Фон
+        .edgesIgnoringSafeArea(.all) // Фон на весь экран
+        .sheet(isPresented: $showSeedPhrase) {
+            SeedPhraseView(seedPhrase: $seedPhrase)
+        }
+        .sheet(isPresented: $showLoginView) {
+            LoginView()
+        }
+    }
+    
         func registerUser() {
             guard let url = URL(string: "http://localhost:8000/register") else { return }
 
@@ -173,9 +202,34 @@ struct WelcomeView: View {
                 }
             }.resume()
         }
+    
+    // Запуск бесконечной ротации слоганов
+        func startSloganRotation() {
+            Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
+                withAnimation(Animation.easeInOut(duration: 1.5)) {
+                    currentSloganIndex = (currentSloganIndex + 1) % slogans.count
+                }
+            }
+        }
     }
 
-// MARK: - Seed-фраза после регистрации
+// Вспомогательная структура для создания анимаций слоганов
+struct AnimatedSloganView: View {
+    var text: String
+    var index: Int
+    @Binding var currentSloganIndex: Int
+
+    var body: some View {
+        Text(text)
+            .font(.system(size: 34, weight: .bold, design: .rounded)) // Жирный и технологичный шрифт для слоганов
+            .foregroundColor(.blue)
+            .opacity(currentSloganIndex == index ? 1 : 0)
+            .offset(x: currentSloganIndex == index ? 0 : 100)
+            .rotationEffect(.degrees(currentSloganIndex == index ? 0 : 10))
+            .animation(.spring(response: 0.8, dampingFraction: 0.5), value: currentSloganIndex)
+    }
+}
+
 struct SeedPhraseView: View {
     @Binding var seedPhrase: String
     @Environment(\.presentationMode) var presentationMode
@@ -187,9 +241,11 @@ struct SeedPhraseView: View {
         VStack(spacing: 30) {
             // Заголовок
             Text("Ваша сид-фраза")
-                .font(.title2)
+                .font(.largeTitle)
                 .fontWeight(.bold)
                 .padding(.top, 20)
+                .foregroundColor(.blue)
+                .shadow(color: .blue.opacity(0.3), radius: 10, x: 0, y: 5)
             
             // Сид-фраза с возможностью скрыть или показать
             VStack(spacing: 15) {
@@ -198,6 +254,7 @@ struct SeedPhraseView: View {
                         Text(seedPhrase)
                             .font(.system(.body, design: .monospaced))
                             .foregroundColor(.primary)
+                            .shadow(color: .blue.opacity(0.2), radius: 5, x: 0, y: 5)
                     } else {
                         Text("********")
                             .font(.system(.body, design: .monospaced))
@@ -213,12 +270,14 @@ struct SeedPhraseView: View {
                     }) {
                         Image(systemName: isSeedVisible ? "eye.slash.fill" : "eye.fill")
                             .foregroundColor(.blue)
-                            .font(.system(size: 22))
+                            .font(.system(size: 20))
+                            .scaleEffect(isSeedVisible ? 1.2 : 1.0)
                     }
                 }
                 .padding()
                 .background(Color.gray.opacity(0.1))
                 .cornerRadius(12)
+                .shadow(color: .blue.opacity(0.3), radius: 10, x: 0, y: 5)
             }
 
             // Кнопка "Копировать"
@@ -243,20 +302,14 @@ struct SeedPhraseView: View {
                 .background(Color.blue.opacity(0.2))
                 .foregroundColor(.blue)
                 .cornerRadius(12)
-                .shadow(radius: 5)
+                .shadow(color: .blue.opacity(0.5), radius: 10, x: 0, y: 5)
             }
             .padding(.horizontal, 20)
 
-            // Уведомление о копировании
-            if isCopied {
-                Text("Скопировано!")
-                    .font(.caption)
-                    .foregroundColor(.green)
-                    .transition(.opacity)
-            }
-            
+            // Анимация "Сохраните свою сид-фразу"
             Spacer()
-            
+            SaveSeedPhraseAnimationView() // Анимация
+
             // Кнопка продолжить
             Button(action: {
                 authManager.login(with: seedPhrase)
@@ -269,7 +322,7 @@ struct SeedPhraseView: View {
                     .background(Color.green.opacity(0.2))
                     .foregroundColor(.green)
                     .cornerRadius(12)
-                    .shadow(radius: 5)
+                    .shadow(color: .green.opacity(0.5), radius: 10, x: 0, y: 5)
             }
             .padding(.horizontal, 20)
         }
@@ -278,15 +331,56 @@ struct SeedPhraseView: View {
     }
 }
 
+// Анимация "Сохраните свою сид-фразу"
+struct SaveSeedPhraseAnimationView: View {
+    @State private var isAnimating = false
+
+    var body: some View {
+        VStack {
+            HStack {
+                Image(systemName: "lock.fill")
+                    .resizable()
+                    .frame(width: 60, height: 60)
+                    .foregroundColor(.blue)
+                    .scaleEffect(isAnimating ? 1.1 : 1.0)
+                    .animation(Animation.easeInOut(duration: 1).repeatForever(autoreverses: true), value: isAnimating)
+                
+                Text("Сохраните вашу seed-фразу в безопасном месте!")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .padding(.leading, 10)
+            }
+            .padding()
+            .background(Color.blue.opacity(0.8))
+            .cornerRadius(15)
+            .shadow(color: .blue.opacity(0.5), radius: 10, x: 0, y: 5)
+            .onAppear {
+                isAnimating = true
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, 20)
+    }
+}
+
+import SwiftUI
 
 struct LoginView: View {
     @State private var seedPhrase: String = ""
-    @State private var password: String = "" // Поле для пароля
     @Environment(\.presentationMode) var presentationMode
     @EnvironmentObject var authManager: AuthManager
     @State private var isSeedVisible: Bool = false
     @State private var loginError: Bool = false
     @State private var showLoading: Bool = false
+    @State private var isButtonPressed = false // Для анимации кнопки
+    @State private var colorChange = false // Для переливающегося заголовка
+    @State private var currentIconIndex = 0 // Для анимации иконок
+
+    let icons = [
+        ("lock.shield.fill", "Безопасность"),
+        ("key.fill", "Шифрование"),
+        ("hand.raised.fill", "Приватность")
+    ]
 
     var body: some View {
         ZStack {
@@ -294,14 +388,17 @@ struct LoginView: View {
                 .edgesIgnoringSafeArea(.all)
 
             VStack(spacing: 30) {
-                // Заголовок
+                // Переливающийся заголовок (статичный)
                 Text("Вход")
-                    .font(.largeTitle)
+                    .font(.system(size: 30, weight: .heavy, design: .rounded)) // Статичный заголовок с большим размером
                     .fontWeight(.bold)
-                    .padding(.top, 50)
-                    .foregroundColor(Color(.label)) // Динамический цвет текста
+                    .padding(.top, 30)
+                    .foregroundColor(colorChange ? Color.blue : Color.green)
+                    .onAppear {
+                        colorChange.toggle()
+                    }
 
-                // Поля ввода для сид-фразы и пароля
+                // Поле ввода для сид-фразы
                 VStack(alignment: .leading, spacing: 15) {
                     Text("Введите вашу сид-фразу:")
                         .font(.headline)
@@ -314,16 +411,17 @@ struct LoginView: View {
                                 .background(Color(UIColor.secondarySystemBackground)) // Динамический цвет фона
                                 .foregroundColor(Color(.label)) // Динамический цвет текста
                                 .cornerRadius(12)
-                                .shadow(radius: 5)
+                                .shadow(color: .blue.opacity(0.3), radius: 10, x: 0, y: 5) // Тень с анимацией
                         } else {
                             SecureField("Введите сид-фразу", text: $seedPhrase)
                                 .padding()
                                 .background(Color(UIColor.secondarySystemBackground)) // Динамический цвет фона
                                 .foregroundColor(Color(.label)) // Динамический цвет текста
                                 .cornerRadius(12)
-                                .shadow(radius: 5)
+                                .shadow(color: .blue.opacity(0.3), radius: 10, x: 0, y: 5) // Тень с анимацией
                         }
 
+                        // Кнопка "Глазик" для показа/скрытия
                         Button(action: {
                             withAnimation {
                                 isSeedVisible.toggle()
@@ -331,19 +429,48 @@ struct LoginView: View {
                         }) {
                             Image(systemName: isSeedVisible ? "eye.slash.fill" : "eye.fill")
                                 .foregroundColor(.blue)
+                                .padding(.trailing, 5)
+                        }
+
+                        // Кнопка "Вставить" для вставки текста из буфера обмена
+                        Button(action: {
+                            if let clipboardText = UIPasteboard.general.string {
+                                seedPhrase = clipboardText
+                            }
+                        }) {
+                            Image(systemName: "doc.on.clipboard")
+                                .foregroundColor(.blue)
                                 .padding(.trailing, 10)
                         }
                     }
                 }
                 .padding(.horizontal, 20)
+
+                // Анимированные иконки безопасности (очень большие иконки на весь оставшийся экран)
+                ZStack {
+                    ForEach(0..<icons.count, id: \.self) { index in
+                        AnimatedIconView(icon: icons[index].0, text: icons[index].1, index: index, currentIconIndex: $currentIconIndex)
+                    }
+                }
+                .frame(height: UIScreen.main.bounds.height * 0.4) // Занимает значительную часть экрана
+                .onAppear {
+                    startIconRotation()
+                }
+
                 Spacer()
-                
+
                 if showLoading {
                     ProgressView()
                         .padding()
                 } else {
                     Button(action: {
-                        loginUser()
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.5, blendDuration: 0.3)) {
+                            isButtonPressed.toggle()
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                                isButtonPressed = false
+                                loginUser()
+                            }
+                        }
                     }) {
                         Text("Войти")
                             .fontWeight(.bold)
@@ -352,7 +479,8 @@ struct LoginView: View {
                             .background(Color.blue.opacity(0.2))
                             .foregroundColor(.blue)
                             .cornerRadius(12)
-                            .shadow(radius: 5)
+                            .shadow(color: isButtonPressed ? .blue.opacity(0.7) : .blue.opacity(0.5), radius: 10, x: 0, y: 5) // Анимация тени при нажатии
+                            .scaleEffect(isButtonPressed ? 0.95 : 1.0) // Анимация уменьшения при нажатии
                     }
                     .padding(.horizontal, 20)
                     .padding(.bottom, 30) // Располагаем кнопку внизу
@@ -360,12 +488,22 @@ struct LoginView: View {
 
                 // Ошибка при неверной сид-фразе или пароле
                 if loginError {
-                    Text("Неверная сид-фраза или пароль. Попробуйте снова.")
+                    Text("Неверная сид-фраза. Попробуйте снова.")
                         .font(.caption)
                         .foregroundColor(.red)
                         .padding(.top, 10)
                         .transition(.opacity)
+                        .animation(.easeInOut(duration: 0.3), value: loginError)
                 }
+            }
+        }
+    }
+
+    // Запуск бесконечной ротации иконок
+    func startIconRotation() {
+        Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { _ in
+            withAnimation(Animation.easeInOut(duration: 1.5)) {
+                currentIconIndex = (currentIconIndex + 1) % icons.count
             }
         }
     }
@@ -378,7 +516,7 @@ struct LoginView: View {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
         // Формируем тело запроса
-        let body: [String: String] = ["seed": seedPhrase, "password": password]
+        let body: [String: String] = ["seed": seedPhrase]
 
         do {
             let jsonData = try JSONSerialization.data(withJSONObject: body, options: [])
@@ -400,15 +538,15 @@ struct LoginView: View {
             }
 
             do {
-                            // Проверим, что это успешный ответ, и выведем сообщение
+                // Проверим, что это успешный ответ, и выведем сообщение
                 if let responseJSON = try JSONSerialization.jsonObject(with: data, options: []) as? [String: String],
                 let message = responseJSON["message"] {
                     print("Сообщение от сервера: \(message)")
-                        // Успешный вход
+                    // Успешный вход
                     DispatchQueue.main.async {
-                    authManager.login(with: seedPhrase)
-                    presentationMode.wrappedValue.dismiss() // Закрываем экран логина
-                        }
+                        authManager.login(with: seedPhrase)
+                        presentationMode.wrappedValue.dismiss() // Закрываем экран логина
+                    }
                 } else {
                     DispatchQueue.main.async {
                         loginError = true
@@ -418,6 +556,35 @@ struct LoginView: View {
                 print("Ошибка декодирования ответа: \(error)")
             }
         }.resume()
+    }
+}
+
+// Вспомогательная структура для создания анимаций иконок
+struct AnimatedIconView: View {
+    var icon: String
+    var text: String
+    var index: Int
+    @Binding var currentIconIndex: Int
+
+    var body: some View {
+        VStack {
+            Image(systemName: icon)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: UIScreen.main.bounds.width * 0.5, height: UIScreen.main.bounds.width * 0.5) // Очень большие иконки
+                .foregroundColor(.blue)
+                .opacity(currentIconIndex == index ? 1 : 0)
+                .scaleEffect(currentIconIndex == index ? 1 : 0.8)
+                .rotationEffect(.degrees(currentIconIndex == index ? 0 : -10))
+
+            Text(text)
+                .font(.title2)
+                .fontWeight(.bold)
+                .foregroundColor(.blue)
+                .opacity(currentIconIndex == index ? 1 : 0)
+                .scaleEffect(currentIconIndex == index ? 1 : 0.8)
+        }
+        .animation(Animation.spring(response: 0.8, dampingFraction: 0.5), value: currentIconIndex)
     }
 }
 
@@ -475,61 +642,89 @@ struct PasswordGeneratorView: View {
         ZStack {
             NavigationView {
                 VStack {
-                    Form {
-                        Section(header: Text("Настройки генерации")) {
-                            TextField("Количество паролей", text: $numberOfPasswords)
-                                .keyboardType(.numberPad)
-                            TextField("Длина пароля", text: $passwordLength)
-                                .keyboardType(.numberPad)
-                            Toggle(isOn: $useUppercase) {
-                                Text("Использовать заглавные буквы")
-                            }
-                            Toggle(isOn: $useNumbers) {
-                                Text("Использовать цифры")
-                            }
-                            Toggle(isOn: $useSpecialCharacters) {
-                                Text("Использовать специальные символы")
-                            }
-                            Button(action: {
-                                generatePasswords()
-                            }) {
-                                Text("Сгенерировать")
-                                    .fontWeight(.bold)
-                                    .padding()
-                                    .frame(maxWidth: .infinity)
-                                    .background(Color.gray.opacity(0.2))
-                                    .foregroundColor(.blue)
-                                    .cornerRadius(12)
-                                    .shadow(radius: 5)
-                            }
+                    // Убираем лишний отступ сверху для секции настроек
+                    VStack {
+                        TextField("Количество паролей", text: $numberOfPasswords)
+                            .keyboardType(.numberPad)
+                            .padding()
+                            .background(Color(UIColor.secondarySystemBackground))
+                            .cornerRadius(8)
+                        TextField("Длина пароля", text: $passwordLength)
+                            .keyboardType(.numberPad)
+                            .padding()
+                            .background(Color(UIColor.secondarySystemBackground))
+                            .cornerRadius(8)
+                        Toggle(isOn: $useUppercase) {
+                            Text("Использовать заглавные буквы")
                         }
-                        
-                        Section(header: Text("Сгенерированные пароли")) {
-                            ForEach(generatedPasswords, id: \.self) { password in
-                                HStack {
-                                    Text(password)
-                                    Spacer()
-                                    // Кнопка для копирования пароля
-                                    Button(action: {
-                                        copyToClipboard(text: password) // Действие для копирования
-                                    }) {
-                                        Image(systemName: "doc.on.doc")
-                                            .foregroundColor(.blue)
-                                    }
-                                    .buttonStyle(PlainButtonStyle()) // Отключаем стандартную анимацию нажатия, чтобы избежать конфликтов
+                        .padding(.top, 10)
+                        Toggle(isOn: $useNumbers) {
+                            Text("Использовать цифры")
+                        }
+                        .padding(.top, 10)
+                        Toggle(isOn: $useSpecialCharacters) {
+                            Text("Использовать специальные символы")
+                        }
+                        .padding(.top, 10)
 
-                                    // Кнопка для сохранения пароля
-                                    Button(action: {
-                                        selectedPassword = password
-                                        showSavePasswordView = true // Действие для открытия окна сохранения
-                                    }) {
-                                        Image(systemName: "square.and.arrow.down")
-                                            .foregroundColor(.green)
+                        Button(action: {
+                            generatePasswords()
+                        }) {
+                            Text("Сгенерировать")
+                                .fontWeight(.bold)
+                                .padding()
+                                .frame(maxWidth: .infinity)
+                                .background(Color.blue.opacity(0.2))
+                                .foregroundColor(.blue)
+                                .cornerRadius(12)
+                                .shadow(radius: 5)
+                        }
+                        .padding(.top, 10)
+                    }
+                    .padding()
+                    .background(Color(UIColor.systemBackground)) // Системный фон для адаптации к теме
+                    .cornerRadius(12)
+                    .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                    .padding([.leading, .trailing], 20)
+
+                    // Секция с карточками для сгенерированных паролей
+                    ScrollView {
+                        VStack(spacing: 15) {
+                            ForEach(generatedPasswords, id: \.self) { password in
+                                VStack {
+                                    HStack {
+                                        Text(password)
+                                            .font(.system(.body, design: .monospaced))
+                                            .foregroundColor(.primary)
+                                        Spacer()
+                                        // Кнопка для копирования пароля
+                                        Button(action: {
+                                            copyToClipboard(text: password) // Действие для копирования
+                                        }) {
+                                            Image(systemName: "doc.on.doc")
+                                                .foregroundColor(.blue)
+                                        }
+                                        .buttonStyle(PlainButtonStyle()) // Отключаем стандартную анимацию нажатия
+
+                                        // Кнопка для сохранения пароля
+                                        Button(action: {
+                                            selectedPassword = password
+                                            showSavePasswordView = true // Действие для открытия окна сохранения
+                                        }) {
+                                            Image(systemName: "square.and.arrow.down")
+                                                .foregroundColor(.green)
+                                        }
+                                        .buttonStyle(PlainButtonStyle())
                                     }
-                                    .buttonStyle(PlainButtonStyle())
                                 }
+                                .padding()
+                                .background(Color(UIColor.systemBackground)) // Системный фон для адаптации к теме
+                                .cornerRadius(12)
+                                .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                                .padding([.leading, .trailing], 20)
                             }
                         }
+                        .padding(.bottom, 80) // Отступ, чтобы не заезжать за таб-бар
                     }
                 }
                 .navigationTitle("Генератор паролей")
@@ -537,7 +732,7 @@ struct PasswordGeneratorView: View {
         }
         .sheet(isPresented: $showSavePasswordView) {
             SavePasswordView(isPresented: $showSavePasswordView, currentPassword: $selectedPassword, saveAction: savePassword)
-                .environmentObject(authManager) // Передаем authManager в SavePasswordView
+                .environmentObject(authManager)
         }
     }
     
@@ -574,7 +769,7 @@ struct PasswordGeneratorView: View {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        
+
         let passwordData = PasswordData(password_name: "NewPassword", password_value: password, service: service, email: email, username: username)
         
         // Преобразуем структуру в словарь
@@ -604,28 +799,37 @@ struct SavePasswordView: View {
     @Binding var currentPassword: String
     @EnvironmentObject var authManager: AuthManager
     var saveAction: (String, String, String, String) -> Void
-
+    
     @State private var service = ""
     @State private var email = ""
     @State private var username = ""
-
+    
     var body: some View {
         NavigationView {
             VStack {
-                Form {
-                    Section(header: Text("Данные о пароле")) {
+                // Секция с тенями для ввода данных
+                VStack {
+                    Section() {
                         CustomTextField(placeholder: "Сервис", text: $service)
                         CustomTextField(placeholder: "Email", text: $email)
                         CustomTextField(placeholder: "Username", text: $username)
                     }
-
-                    Section(header: Text("Пароль")) {
+                }
+                .padding()
+                .background(Color(UIColor.systemBackground)) // Системный фон для адаптации к теме
+                .cornerRadius(12)
+                .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                .padding([.leading, .trailing], 20) // Отступы от краев экрана
+                
+                // Секция с отображением текущего пароля
+                VStack {
+                    Section() {
                         HStack {
                             Text(currentPassword)
                                 .font(.system(.body, design: .monospaced))
                                 .foregroundColor(.gray)
                                 .padding()
-                                .background(Color.gray.opacity(0.1))
+                                .background(Color(UIColor.secondarySystemBackground))
                                 .cornerRadius(8)
                             Spacer()
                             Button(action: {
@@ -637,10 +841,14 @@ struct SavePasswordView: View {
                         }
                     }
                 }
-                .padding(.top, 20)
+                .padding()
+                .background(Color(UIColor.systemBackground)) // Системный фон для адаптации к теме
+                .cornerRadius(12)
+                .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                .padding([.leading, .trailing], 20) // Отступы от краев экрана
                 
                 Spacer()
-
+                
                 // Кнопка "Сохранить"
                 Button(action: {
                     saveAction(service, email, username, currentPassword)
@@ -662,6 +870,25 @@ struct SavePasswordView: View {
             .navigationBarItems(leading: Button("Отмена") {
                 isPresented = false
             })
+        }
+    }
+    
+    
+    // Кастомный TextField для улучшения внешнего вида текстовых полей
+    struct CustomTextField: View {
+        var placeholder: String
+        @Binding var text: String
+        
+        var body: some View {
+            TextField(placeholder, text: $text)
+                .padding()
+                .background(Color(UIColor.secondarySystemBackground)) // Системный цвет для текстового поля
+                .cornerRadius(8)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(Color.gray.opacity(0.5), lineWidth: 1)
+                )
+                .padding(.bottom, 10)
         }
     }
 }
@@ -688,82 +915,105 @@ struct CustomTextField: View {
 struct SavedPasswordsView: View {
     @EnvironmentObject var authManager: AuthManager
     @State private var savedPasswords: [PasswordData] = []
+    @State private var showAddPasswordView = false // Для отображения формы добавления пароля
     @State private var searchText: String = "" // Состояние для текста поиска
     @State private var isSearching: Bool = false // Для анимации поиска
 
     var body: some View {
         NavigationView {
-            VStack {
-                // Поле поиска с анимацией
-                HStack {
+            ZStack { // Используем ZStack для наложения кнопки поверх контента
+                VStack {
+                    // Поле поиска с анимацией
                     HStack {
-                        Image(systemName: "magnifyingglass")
-                            .foregroundColor(.gray)
-                        
-                        TextField("Поиск по сервису...", text: $searchText)
-                            .onTapGesture {
+                        HStack {
+                            Image(systemName: "magnifyingglass")
+                                .foregroundColor(.gray)
+
+                            TextField("Поиск по сервису...", text: $searchText)
+                                .onTapGesture {
+                                    withAnimation {
+                                        isSearching = true
+                                    }
+                                }
+                                .textFieldStyle(PlainTextFieldStyle())
+                                .frame(height: 40)
+                        }
+                        .padding(.horizontal)
+                        .background(Color(.systemGray6))
+                        .cornerRadius(10)
+                        .padding(.horizontal)
+
+                        if isSearching {
+                            Button(action: {
                                 withAnimation {
-                                    isSearching = true
+                                    searchText = ""
+                                    isSearching = false
+                                    hideKeyboard() // Скрываем клавиатуру
+                                }
+                            }) {
+                                Text("Отмена")
+                                    .foregroundColor(.blue)
+                                    .padding(.trailing, 10)
+                                    .transition(.move(edge: .trailing))
+                            }
+                        }
+                    }
+                    .padding(.top, 8)
+
+                    // Проверяем, пуст ли список сохраненных паролей
+                    if savedPasswords.isEmpty {
+                        VStack {
+                            Spacer()
+
+                            Image(systemName: "tray")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 100, height: 100) // Размер изображения
+                                .foregroundColor(.gray)
+                                .padding(.bottom, 0)
+
+                            Text("Нет сохраненных паролей")
+                                .foregroundColor(.gray)
+                                .padding()
+
+                            Spacer()
+                        }
+                    } else {
+                        ScrollView {
+                            LazyVStack(spacing: 15) {
+                                ForEach(filteredPasswords, id: \.password_name) { password in
+                                    PasswordCardView(password: password, savedPasswords: $savedPasswords)
+                                        .padding(.horizontal)
+                                        .transition(.opacity) // Анимация появления/исчезновения
+                                        .animation(.easeInOut(duration: 0.4), value: filteredPasswords) // Применяем анимацию при изменении списка
                                 }
                             }
-                            .textFieldStyle(PlainTextFieldStyle())
-                            .frame(height: 40)
-                    }
-                    .padding(.horizontal)
-                    .background(Color(.systemGray6))
-                    .cornerRadius(10)
-                    .padding(.horizontal)
-                    
-                    if isSearching {
-                        Button(action: {
-                            withAnimation {
-                                searchText = ""
-                                isSearching = false
-                                hideKeyboard() // Скрываем клавиатуру
-                            }
-                        }) {
-                            Text("Отмена")
-                                .foregroundColor(.blue)
-                                .padding(.trailing, 10)
-                                .transition(.move(edge: .trailing))
                         }
+                        .padding(.top, 10)
                     }
                 }
-                .padding(.top, 8)
 
-                // Проверяем, пуст ли список сохраненных паролей
-                if savedPasswords.isEmpty {
-                    VStack {
+                // Кнопка добавления в правом нижнем углу
+                VStack {
+                    Spacer()
+                    HStack {
                         Spacer()
-                        
-                        Image(systemName: "tray")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 100, height: 100) // Размер изображения
-                            .foregroundColor(.gray)
-                            .padding(.bottom, 20)
-                        
-                        Text("Нет сохраненных паролей")
-                            .foregroundColor(.gray)
-                            .padding()
-                        
-                        Spacer()
-                    }
-                } else {
-                    ScrollView {
-                        LazyVStack(spacing: 15) {
-                            ForEach(filteredPasswords, id: \.password_name) { password in
-                                PasswordCardView(password: password, savedPasswords: $savedPasswords)
-                                    .padding(.horizontal)
-                                    .transition(.opacity) // Анимация появления/исчезновения
-                                    .animation(.easeInOut(duration: 0.4), value: filteredPasswords) // Применяем анимацию при изменении списка
-                            }
+                        Button(action: {
+                            showAddPasswordView = true
+                        }) {
+                            Image(systemName: "plus.circle.fill")
+                                .font(.system(size: 34)) // Устанавливаем размер иконки
+                                .foregroundColor(.green)
+                                .padding()
+                        }
+                        .sheet(isPresented: $showAddPasswordView) {
+                            AddPasswordView(isPresented: $showAddPasswordView, savePassword: savePassword)
                         }
                     }
-                    .padding(.top, 10)
+                    .padding([.trailing, .bottom], 10) // Добавляем отступы от края
                 }
             }
-            .navigationTitle("Сохраненные пароли")
+            .navigationTitle("Сохраненные")
             .onAppear(perform: loadPasswords)
         }
     }
@@ -776,39 +1026,187 @@ struct SavedPasswordsView: View {
         }
     }
 
-    func loadPasswords() {
-        guard let url = URL(string: "http://localhost:8000/get_passwords?seed=\(authManager.seedPhrase)") else {
-            print("Неверный URL")
-            return
-        }
+    // Функция для сохранения пользовательских паролей
+        func savePassword(service: String, email: String, username: String, password: String) {
+            guard let url = URL(string: "http://localhost:8000/save_password") else { return }
 
-        URLSession.shared.dataTask(with: url) { data, response, error in
-            if let error = error {
-                print("Ошибка загрузки данных: \(error)")
-                return
-            }
+            var request = URLRequest(url: url)
+            request.httpMethod = "POST"
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
-            guard let data = data else {
-                print("Нет данных")
-                return
-            }
+            let passwordData = PasswordData(
+                password_name: "UserDefinedPassword",
+                password_value: password,
+                service: service,
+                email: email,
+                username: username
+            )
+
+            let body: [String: Any] = [
+                "seed": authManager.seedPhrase,
+                "password_data": passwordData.toDictionary()
+            ]
 
             do {
-                let decodedResponse = try JSONDecoder().decode(PasswordsResponse.self, from: data)
-                DispatchQueue.main.async {
-                    self.savedPasswords = decodedResponse.passwords
-                }
+                let jsonData = try JSONSerialization.data(withJSONObject: body, options: [])
+                request.httpBody = jsonData
             } catch {
-                print("Ошибка декодирования: \(error)")
+                print("Ошибка сериализации JSON: \(error)")
+                return
             }
-        }.resume()
-    }
+
+            // Отправляем запрос на сервер
+            URLSession.shared.dataTask(with: request) { data, response, error in
+                if let error = error {
+                    print("Ошибка запроса: \(error)")
+                    return
+                }
+
+                // Обновляем список паролей после сохранения
+                DispatchQueue.main.async {
+                    loadPasswords()
+                }
+            }.resume()
+        }
+
+        // Функция для загрузки паролей
+        func loadPasswords() {
+            guard let url = URL(string: "http://localhost:8000/get_passwords?seed=\(authManager.seedPhrase)") else { return }
+
+            URLSession.shared.dataTask(with: url) { data, response, error in
+                if let error = error {
+                    print("Ошибка загрузки паролей: \(error)")
+                    return
+                }
+
+                guard let data = data else {
+                    print("Нет данных")
+                    return
+                }
+
+                do {
+                    let decodedResponse = try JSONDecoder().decode(PasswordsResponse.self, from: data)
+                    DispatchQueue.main.async {
+                        self.savedPasswords = decodedResponse.passwords
+                    }
+                } catch {
+                    print("Ошибка декодирования данных: \(error)")
+                }
+            }.resume()
+        }
+    
 
     func hideKeyboard() {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 }
 
+struct AddPasswordView: View {
+    @Binding var isPresented: Bool
+    var savePassword: (String, String, String, String) -> Void
+    
+    @State private var service = ""
+    @State private var email = ""
+    @State private var username = ""
+    @State private var password = ""
+    @State private var isPasswordVisible = true // Изначально пароль видим
+    
+    var body: some View {
+        NavigationView {
+            VStack {
+                // Секция с тенями для ввода информации о сервисе
+                VStack {
+                    Section() {
+                        CustomTextField(placeholder: "Сервис", text: $service)
+                        CustomTextField(placeholder: "Email", text: $email)
+                        CustomTextField(placeholder: "Имя пользователя", text: $username)
+                    }
+                }
+                .padding()
+                .background(Color(UIColor.systemBackground)) // Используем системный цвет для адаптации к теме
+                .cornerRadius(12)
+                .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                .padding([.leading, .trailing], 20) // Отступы от краев экрана
+                
+                // Секция с тенями для пароля
+                VStack {
+                    Section() {
+                        HStack {
+                            if isPasswordVisible {
+                                TextField("Пароль", text: $password) // Открытый ввод пароля
+                                    .padding()
+                                    .background(Color(UIColor.secondarySystemBackground))
+                                    .cornerRadius(8)
+                            } else {
+                                SecureField("Пароль", text: $password) // Скрытый ввод пароля
+                                    .padding()
+                                    .background(Color(UIColor.secondarySystemBackground))
+                                    .cornerRadius(8)
+                            }
+                            
+                            // Кнопка для отображения/скрытия пароля
+                            Button(action: {
+                                isPasswordVisible.toggle() // Переключаем состояние видимости пароля
+                            }) {
+                                Image(systemName: isPasswordVisible ? "eye.slash.fill" : "eye.fill")
+                                    .foregroundColor(.blue)
+                            }
+                            .padding(.trailing, 5) // Отступ справа для кнопки
+                            .padding(.trailing, 0)
+                        }
+                    }
+                }
+                .padding()
+                .background(Color(UIColor.systemBackground)) // Используем системный цвет для адаптации к теме
+                .cornerRadius(12)
+                .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                .padding([.leading, .trailing], 20) // Отступы от краев экрана
+                
+                Spacer()
+                
+                // Кнопка "Сохранить"
+                Button(action: {
+                    savePassword(service, email, username, password)
+                    isPresented = false
+                }) {
+                    Text("Сохранить пароль")
+                        .fontWeight(.bold)
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(Color.blue.opacity(0.2))
+                        .foregroundColor(.blue)
+                        .cornerRadius(12)
+                        .shadow(radius: 5)
+                        .padding([.leading, .trailing], 20)
+                }
+                .padding(.bottom, 20)
+            }
+            .navigationBarTitle("Добавить пароль", displayMode: .inline)
+            .navigationBarItems(leading: Button("Отмена") {
+                isPresented = false
+            })
+        }
+    }
+    
+    
+    // Кастомный TextField для улучшения внешнего вида текстовых полей
+    struct CustomTextField: View {
+        var placeholder: String
+        @Binding var text: String
+        
+        var body: some View {
+            TextField(placeholder, text: $text)
+                .padding()
+                .background(Color(UIColor.secondarySystemBackground)) // Системный цвет для текстового поля
+                .cornerRadius(8)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(Color.gray.opacity(0.5), lineWidth: 1)
+                )
+                .padding(.bottom, 10)
+        }
+    }
+}
 
 // MARK: - Карточка пароля
 struct PasswordCardView: View {
@@ -1090,6 +1488,7 @@ struct SettingsView: View {
                 MailView(result: self.$mailResult) // Открытие экрана почты
             }
             .navigationTitle("Настройки")
+
         }
     }
 }
