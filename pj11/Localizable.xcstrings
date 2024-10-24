@@ -1065,6 +1065,12 @@
             "state" : "translated",
             "value" : "Saved Passwords"
           }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сохранённые"
+          }
         }
       }
     },

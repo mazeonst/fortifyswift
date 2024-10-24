@@ -729,7 +729,7 @@ struct SavedPasswordsView: View {
                         }
                     }
                 }
-                .padding(.top, 10)
+                .padding(.top, 8)
 
                 // Проверяем, пуст ли список сохраненных паролей
                 if savedPasswords.isEmpty {
@@ -760,6 +760,7 @@ struct SavedPasswordsView: View {
                             }
                         }
                     }
+                    .padding(.top, 10)
                 }
             }
             .navigationTitle("Сохраненные пароли")
