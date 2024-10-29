@@ -833,7 +833,14 @@
       }
     },
     "Добавить пароль" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add password"
+          }
+        }
+      }
     },
     "Добро пожаловать!" : {
       "extractionState" : "stale",
@@ -949,7 +956,14 @@
       }
     },
     "Неверная сид-фраза. Попробуйте снова." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Invalid seed phrase. Please try again."
+          }
+        }
+      }
     },
     "Нет сохраненных паролей" : {
       "localizations" : {
@@ -1091,7 +1105,14 @@
       }
     },
     "Сохраните вашу seed-фразу в безопасном месте!" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keep your seed phrase in a safe place"
+          }
+        }
+      }
     },
     "Сохранить" : {
       "localizations" : {

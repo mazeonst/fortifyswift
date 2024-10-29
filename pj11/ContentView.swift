@@ -263,6 +263,7 @@ struct SeedPhraseView: View {
                     
                     Spacer()
                     
+                    // Кнопка "Глазик" для показа/скрытия
                     Button(action: {
                         withAnimation {
                             isSeedVisible.toggle()
@@ -273,6 +274,24 @@ struct SeedPhraseView: View {
                             .font(.system(size: 20))
                             .scaleEffect(isSeedVisible ? 1.2 : 1.0)
                     }
+                    
+                    // Кнопка "Копировать"
+                    Button(action: {
+                        UIPasteboard.general.string = seedPhrase
+                        withAnimation {
+                            isCopied = true
+                        }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                            withAnimation {
+                                isCopied = false
+                            }
+                        }
+                    }) {
+                        Image(systemName: "doc.on.doc")
+                            .foregroundColor(.blue)
+                            .font(.system(size: 20))
+                            .scaleEffect(isCopied ? 1.2 : 1.0)
+                    }
                 }
                 .padding()
                 .background(Color.gray.opacity(0.1))
@@ -280,37 +299,11 @@ struct SeedPhraseView: View {
                 .shadow(color: .blue.opacity(0.3), radius: 10, x: 0, y: 5)
             }
 
-            // Кнопка "Копировать"
-            Button(action: {
-                UIPasteboard.general.string = seedPhrase
-                withAnimation {
-                    isCopied = true
-                }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                    withAnimation {
-                        isCopied = false
-                    }
-                }
-            }) {
-                HStack {
-                    Image(systemName: "doc.on.doc")
-                    Text("Копировать")
-                }
-                .fontWeight(.bold)
-                .padding()
-                .frame(maxWidth: .infinity)
-                .background(Color.blue.opacity(0.2))
-                .foregroundColor(.blue)
-                .cornerRadius(12)
-                .shadow(color: .blue.opacity(0.5), radius: 10, x: 0, y: 5)
-            }
-            .padding(.horizontal, 20)
-
             // Анимация "Сохраните свою сид-фразу"
             Spacer()
             SaveSeedPhraseAnimationView() // Анимация
 
-            // Кнопка продолжить
+            // Кнопка "Продолжить"
             Button(action: {
                 authManager.login(with: seedPhrase)
                 presentationMode.wrappedValue.dismiss()
@@ -362,8 +355,6 @@ struct SaveSeedPhraseAnimationView: View {
         .padding(.horizontal, 20)
     }
 }
-
-import SwiftUI
 
 struct LoginView: View {
     @State private var seedPhrase: String = ""

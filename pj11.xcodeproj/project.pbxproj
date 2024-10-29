@@ -13,6 +13,7 @@
 		CB173D012CB72913002A96CB /* pj11Tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB173D002CB72913002A96CB /* pj11Tests.swift */; };
 		CB173D0B2CB72913002A96CB /* pj11UITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB173D0A2CB72913002A96CB /* pj11UITests.swift */; };
 		CB173D0D2CB72913002A96CB /* pj11UITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB173D0C2CB72913002A96CB /* pj11UITestsLaunchTests.swift */; };
+		CB48D83B2CD03E0A00E2BE43 /* KeychainSwift in Frameworks */ = {isa = PBXBuildFile; productRef = CB48D83A2CD03E0A00E2BE43 /* KeychainSwift */; };
 		CBAABF9D2CC97F22009D96C1 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = CBAABF9C2CC97F22009D96C1 /* Localizable.xcstrings */; };
 /* End PBXBuildFile section */
 
@@ -43,6 +44,7 @@
 		CB173D062CB72913002A96CB /* pj11UITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = pj11UITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		CB173D0A2CB72913002A96CB /* pj11UITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = pj11UITests.swift; sourceTree = "<group>"; };
 		CB173D0C2CB72913002A96CB /* pj11UITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = pj11UITestsLaunchTests.swift; sourceTree = "<group>"; };
+		CB48D83C2CD04B4200E2BE43 /* Article.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = Article.md; sourceTree = "<group>"; };
 		CB9119042CBC352B00ACA314 /* Article.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = Article.md; sourceTree = "<group>"; };
 		CBAABF9C2CC97F22009D96C1 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -52,6 +54,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CB48D83B2CD03E0A00E2BE43 /* KeychainSwift in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -75,6 +78,7 @@
 		CB173CE32CB72909002A96CB = {
 			isa = PBXGroup;
 			children = (
+				CB48D83C2CD04B4200E2BE43 /* Article.md */,
 				CB173CEE2CB72909002A96CB /* pj11 */,
 				CB173CFF2CB72913002A96CB /* pj11Tests */,
 				CB173D092CB72913002A96CB /* pj11UITests */,
@@ -145,6 +149,9 @@
 			dependencies = (
 			);
 			name = pj11;
+			packageProductDependencies = (
+				CB48D83A2CD03E0A00E2BE43 /* KeychainSwift */,
+			);
 			productName = pj11;
 			productReference = CB173CEC2CB72909002A96CB /* pj11.app */;
 			productType = "com.apple.product-type.application";
@@ -218,6 +225,9 @@
 				ru,
 			);
 			mainGroup = CB173CE32CB72909002A96CB;
+			packageReferences = (
+				CB48D8392CD03DE000E2BE43 /* XCRemoteSwiftPackageReference "keychain-swift" */,
+			);
 			productRefGroup = CB173CED2CB72909002A96CB /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -595,6 +605,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		CB48D8392CD03DE000E2BE43 /* XCRemoteSwiftPackageReference "keychain-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/evgenyneu/keychain-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 24.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		CB48D83A2CD03E0A00E2BE43 /* KeychainSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = CB48D8392CD03DE000E2BE43 /* XCRemoteSwiftPackageReference "keychain-swift" */;
+			productName = KeychainSwift;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = CB173CE42CB72909002A96CB /* Project object */;
 }
