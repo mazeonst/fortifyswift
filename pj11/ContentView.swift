@@ -1,6 +1,128 @@
 import SwiftUI
 import UIKit
 import MessageUI
+import LocalAuthentication
+import KeychainSwift
+import Foundation
+
+@main
+struct PasswordGeneratorApp: App {
+    @StateObject var authManager = AuthManager()
+
+    var body: some Scene {
+        WindowGroup {
+            if authManager.isLoggedIn {
+                if authManager.isPasswordEntered {
+                    ContentView()
+                        .environmentObject(authManager)
+                        .preferredColorScheme(.none) // Автоматическое переключение между светлой и темной темами
+                } else {
+                    LockScreenView() // Новый экран блокировки
+                        .environmentObject(authManager)
+                        .preferredColorScheme(.none)
+                }
+            } else {
+                WelcomeView()
+                    .environmentObject(authManager)
+                    .preferredColorScheme(.none) // Автоматическое переключение между светлой и темной темами
+            }
+        }
+    }
+}
+
+class AuthManager: ObservableObject {
+    @Published var isLoggedIn: Bool = false
+    @Published var isPasswordEntered: Bool = true
+    @Published var seedPhrase: String = ""
+    
+    private let seedPhraseKey = "userSeedPhrase"
+    private let passwordKey = "appPassword"
+    private let keychain = KeychainSwift()
+
+    init() {
+        // Проверка наличия seed-фразы для входа
+        if let savedSeed = UserDefaults.standard.string(forKey: seedPhraseKey) {
+            self.seedPhrase = savedSeed
+            self.isLoggedIn = true
+        }
+        
+        // Если пароль установлен, задаём isPasswordEntered в false, иначе пропускаем LockScreenView
+        if isPasswordSet() {
+            self.isPasswordEntered = false
+        } else {
+            self.isPasswordEntered = true
+        }
+    }
+    
+    // Метод для входа и сохранения seed-фразы
+    func login(with seed: String) {
+        self.seedPhrase = seed
+        self.isLoggedIn = true
+        self.isPasswordEntered = !isPasswordSet() // Пропуск LockScreenView, если пароля нет
+        UserDefaults.standard.set(seed, forKey: seedPhraseKey)
+    }
+    
+    // Установка 6-значного пароля и сохранение его в Keychain
+    func setPassword(_ password: [Int]) {
+        guard password.count == 6 else { return }
+        let passwordString = password.map { String($0) }.joined()
+        keychain.set(passwordString, forKey: passwordKey)
+        self.isPasswordEntered = true
+    }
+
+    // Проверка, установлен ли пароль
+    func isPasswordSet() -> Bool {
+        return keychain.get(passwordKey) != nil
+    }
+
+    // Верификация 6-значного пароля для разблокировки
+    func verifyPassword(_ password: [Int]) -> Bool {
+        guard password.count == 6 else { return false }
+        
+        // Получаем сохранённый пароль как строку и преобразуем его в массив цифр
+        let savedPasswordString = keychain.get(passwordKey) ?? ""
+        let savedPassword = savedPasswordString.compactMap { Int(String($0)) }
+        
+        if savedPassword == password {
+            self.isPasswordEntered = true
+            return true
+        } else {
+            return false
+        }
+    }
+
+    // Удаление пароля
+    func removePassword() {
+        keychain.delete(passwordKey)
+        self.isPasswordEntered = true // Пропускаем LockScreenView, если пароля нет
+    }
+
+    // Выход из аккаунта и удаление seed-фразы и пароля
+    func logout() {
+        self.seedPhrase = ""
+        self.isLoggedIn = false
+        self.isPasswordEntered = true // Пропуск LockScreenView
+        UserDefaults.standard.removeObject(forKey: seedPhraseKey)
+        keychain.delete(passwordKey)
+    }
+    
+    // Аутентификация с использованием Face ID / Touch ID
+    func authenticateWithBiometrics(completion: @escaping (Bool) -> Void) {
+        let context = LAContext()
+        var error: NSError?
+        
+        if context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) {
+            context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: "Для доступа к приложению") { success, _ in
+                DispatchQueue.main.async {
+                    self.isPasswordEntered = success
+                    completion(success)
+                }
+            }
+        } else {
+            completion(false)
+        }
+    }
+}
 
 struct MailView: UIViewControllerRepresentable {
     @Environment(\.presentationMode) var presentation
@@ -40,55 +162,6 @@ struct MailView: UIViewControllerRepresentable {
     }
 
     func updateUIViewController(_ uiViewController: MFMailComposeViewController, context: Context) {}
-}
-
-@main
-struct PasswordGeneratorApp: App {
-    @StateObject var authManager = AuthManager()
-
-    var body: some Scene {
-        WindowGroup {
-            if authManager.isLoggedIn {
-                ContentView()
-                    .environmentObject(authManager)
-                    .preferredColorScheme(.none) // Автоматическое переключение между светлой и темной темами
-            } else {
-                WelcomeView()
-                    .environmentObject(authManager)
-                    .preferredColorScheme(.none) // Автоматическое переключение между светлой и темной темами
-            }
-        }
-    }
-}
-
-// MARK: - Управление авторизацией и Seed-фразой
-class AuthManager: ObservableObject {
-    @Published var isLoggedIn: Bool = false
-    @Published var seedPhrase: String = ""
-    
-    private let seedPhraseKey = "userSeedPhrase"
-    
-    init() {
-        // При инициализации проверяем, есть ли сохранённая сид-фраза
-        if let savedSeed = UserDefaults.standard.string(forKey: seedPhraseKey) {
-            self.seedPhrase = savedSeed
-            self.isLoggedIn = true
-        }
-    }
-    
-    func login(with seed: String) {
-        self.seedPhrase = seed
-        self.isLoggedIn = true
-        // Сохраняем сид-фразу в UserDefaults
-        UserDefaults.standard.set(seed, forKey: seedPhraseKey)
-    }
-
-    func logout() {
-        self.seedPhrase = ""
-        self.isLoggedIn = false
-        // Очищаем сид-фразу из UserDefaults при выходе
-        UserDefaults.standard.removeObject(forKey: seedPhraseKey)
-    }
 }
 
 // MARK: - Экран Вход и Регистрация
@@ -1179,7 +1252,6 @@ struct AddPasswordView: View {
         }
     }
     
-    
     // Кастомный TextField для улучшения внешнего вида текстовых полей
     struct CustomTextField: View {
         var placeholder: String
@@ -1284,7 +1356,6 @@ struct PasswordCardView: View {
         .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
     }
 
-
     // Функция для отправки запроса на удаление пароля
     func deletePassword() {
         guard let url = URL(string: "http://localhost:8000/delete_password") else { return }
@@ -1363,39 +1434,72 @@ struct PasswordData: Codable, Equatable {
 struct SettingsView: View {
     @EnvironmentObject var authManager: AuthManager
     @State private var isSeedPhraseVisible: Bool = false
-    @State private var showingMailView = false // Для отображения почтового экрана
+    @State private var showingMailView = false
     @State private var mailResult: Result<MFMailComposeResult, Error>? = nil
-    @State private var isCopied: Bool = false // Для отображения состояния копирования
+    @State private var isCopied: Bool = false
+    @State private var showingSetPasswordView = false
+    @State private var isPasswordEnabled = false
+    @State private var isBiometricsEnabled = false
+    @State private var hasCheckedPasswordOnce = false
 
     var body: some View {
         NavigationView {
             VStack {
                 ScrollView {
                     VStack(spacing: 20) {
-                        // Другие настройки
+                        // Настройка пароля
                         Section {
-                            Toggle("Использовать биометрию", isOn: .constant(false))
-                                .toggleStyle(SwitchToggleStyle(tint: Color(UIColor.systemBlue))) // Системный цвет для тумблера
+                            Toggle("Использовать код-пароль", isOn: $isPasswordEnabled)
+                                .onChange(of: isPasswordEnabled) { value in
+                                    if value && !authManager.isPasswordSet() {
+                                        // Только если пароль ещё не установлен, показать экран установки
+                                        showingSetPasswordView = true
+                                    } else if !value {
+                                        // Удаляем пароль, если выключен переключатель
+                                        authManager.removePassword()
+                                        isPasswordEnabled = false
+                                    }
+                                }
                         }
                         .padding()
-                        .background(Color(UIColor.secondarySystemBackground)) // Динамический фон
+                        .background(Color(UIColor.secondarySystemBackground))
                         .cornerRadius(10)
                         .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
-
+                        
+                        // Биометрия
+                        Section {
+                            Toggle("Использовать биометрию", isOn: $isBiometricsEnabled)
+                                .onChange(of: isBiometricsEnabled) { value in
+                                    if value {
+                                        authManager.authenticateWithBiometrics { success in
+                                            if !success {
+                                                isBiometricsEnabled = false
+                                            }
+                                        }
+                                    }
+                                }
+                                .toggleStyle(SwitchToggleStyle(tint: Color(UIColor.systemBlue)))
+                        }
+                        .padding()
+                        .background(Color(UIColor.secondarySystemBackground))
+                        .cornerRadius(10)
+                        .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                        
+                        // Показ сид-фразы
                         Section {
                             HStack {
                                 if isSeedPhraseVisible {
                                     Text(authManager.seedPhrase)
                                         .font(.system(.body, design: .monospaced))
-                                        .foregroundColor(Color(.label)) // Динамический цвет для текста
+                                        .foregroundColor(Color(.label))
                                 } else {
                                     Text("**********")
                                         .font(.system(.body, design: .monospaced))
-                                        .foregroundColor(Color(.secondaryLabel)) // Динамический цвет для скрытого текста
+                                        .foregroundColor(Color(.secondaryLabel))
                                 }
-
+                                
                                 Spacer()
-
+                                
                                 // Кнопка для копирования
                                 Button(action: {
                                     UIPasteboard.general.string = authManager.seedPhrase
@@ -1408,8 +1512,8 @@ struct SettingsView: View {
                                         .foregroundColor(.blue)
                                 }
                                 .padding(.trailing, 10)
-
-                                // Кнопка для отображения/скрытия пароля
+                                
+                                // Кнопка для отображения/скрытия сид-фразы
                                 Button(action: {
                                     withAnimation {
                                         isSeedPhraseVisible.toggle()
@@ -1429,10 +1533,10 @@ struct SettingsView: View {
                             }
                         }
                         .padding()
-                        .background(Color(UIColor.secondarySystemBackground)) // Динамический фон
+                        .background(Color(UIColor.secondarySystemBackground))
                         .cornerRadius(10)
                         .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
-
+                        
                         // Кнопка "Contact"
                         Section {
                             Button(action: {
@@ -1447,15 +1551,21 @@ struct SettingsView: View {
                                 }
                             }
                             .padding()
-                            .background(Color(UIColor.secondarySystemBackground)) // Динамический фон
+                            .background(Color(UIColor.secondarySystemBackground))
                             .cornerRadius(10)
                             .shadow(radius: 5)
                         }
                     }
                     .padding()
                 }
+                .onAppear {
+                    if !hasCheckedPasswordOnce {
+                        isPasswordEnabled = authManager.isPasswordSet()
+                        hasCheckedPasswordOnce = true
+                    }
+                }
 
-                // Кнопка "Выйти из аккаунта" закреплена внизу
+                // Кнопка "Выйти из аккаунта"
                 Button(action: {
                     authManager.logout()
                 }) {
@@ -1468,22 +1578,411 @@ struct SettingsView: View {
                     }
                 }
                 .padding()
-                .background(Color(UIColor.secondarySystemBackground)) // Динамический фон
+                .background(Color(UIColor.secondarySystemBackground))
                 .cornerRadius(10)
                 .shadow(color: Color.red.opacity(0.2), radius: 5, x: 0, y: 2)
                 .padding(.horizontal)
-                .padding(.bottom, 20) // Отступ снизу для кнопки
+                .padding(.bottom, 20)
             }
-            .background(Color(UIColor.systemGroupedBackground).edgesIgnoringSafeArea(.all)) // Фон страницы
+            .background(Color(UIColor.systemGroupedBackground).edgesIgnoringSafeArea(.all))
             .sheet(isPresented: $showingMailView) {
-                MailView(result: self.$mailResult) // Открытие экрана почты
+                MailView(result: self.$mailResult)
+            }
+            .sheet(isPresented: $showingSetPasswordView) {
+                SetPasswordView(isPresented: $showingSetPasswordView)
+                    .onDisappear {
+                        isPasswordEnabled = authManager.isPasswordSet()
+                    }
             }
             .navigationTitle("Настройки")
-
         }
     }
 }
 
+// MARK: - SetPasswordView
+struct SetPasswordView: View {
+    @EnvironmentObject var authManager: AuthManager
+    @Binding var isPresented: Bool
+    @State private var firstEntry: [Int] = []
+    @State private var secondEntry: [Int] = []
+    @State private var isConfirming = false
+    @State private var showMismatchAlert = false
+    @State private var showSuccessAnimation = false
+    
+    private let codeLength = 6
+
+    var body: some View {
+        ZStack {
+            VStack {
+                Spacer()
+                
+                Text(isConfirming ? "Подтвердите новый код-пароль" : "Введите новый код-пароль")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .padding(.bottom, 20)
+                
+                HStack(spacing: 10) {
+                    ForEach(0..<codeLength, id: \.self) { index in
+                        Circle()
+                            .frame(width: 15, height: 15)
+                            .foregroundColor((isConfirming ? secondEntry : firstEntry).count > index ? .white : .clear)
+                            .overlay(
+                                Circle()
+                                    .stroke(Color.white, lineWidth: 1)
+                            )
+                    }
+                }
+                .padding(.bottom, 60)
+                
+                Spacer()
+                
+                VStack(spacing: 15) {
+                    ForEach(1...3, id: \.self) { row in
+                        HStack(spacing: 15) {
+                            ForEach(1...3, id: \.self) { column in
+                                let number = (row - 1) * 3 + column
+                                NumberButton(number: number, action: handleInput)
+                            }
+                        }
+                    }
+                    
+                    HStack(spacing: 15) {
+                        FaceIDButton(action: { /* Добавьте Face ID обработчик, если нужно */ })
+                        
+                        NumberButton(number: 0, action: handleInput)
+                        
+                        DeleteButton(action: deleteLastDigit)
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.bottom, 30)
+                
+                Spacer()
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(LinearGradient(gradient: Gradient(colors: [Color.blue, Color.green]), startPoint: .top, endPoint: .bottom))
+            .ignoresSafeArea()
+            .alert(isPresented: $showMismatchAlert) {
+                Alert(title: Text("Ошибка"), message: Text("Пароли не совпадают"), dismissButton: .default(Text("Ок")) {
+                    resetEntries()
+                })
+            }
+            
+            // Показ финальной иконки "Успешно"
+            if showSuccessAnimation {
+                SuccessIconView()
+                    .transition(.scale)
+                    .onAppear {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                            isPresented = false
+                        }
+                    }
+            }
+        }
+    }
+    
+    // MARK: - Actions
+    private func handleInput(_ number: Int) {
+        withAnimation {
+            if isConfirming {
+                if secondEntry.count < codeLength {
+                    secondEntry.append(number)
+                }
+                
+                if secondEntry.count == codeLength {
+                    verifyEntries()
+                }
+            } else {
+                if firstEntry.count < codeLength {
+                    firstEntry.append(number)
+                }
+                
+                if firstEntry.count == codeLength {
+                    isConfirming = true
+                }
+            }
+        }
+    }
+    
+    private func deleteLastDigit() {
+        withAnimation {
+            if isConfirming && !secondEntry.isEmpty {
+                secondEntry.removeLast()
+            } else if !firstEntry.isEmpty {
+                firstEntry.removeLast()
+            }
+        }
+    }
+    
+    private func verifyEntries() {
+        if firstEntry == secondEntry {
+            authManager.setPassword(firstEntry)
+            withAnimation(.spring()) {
+                showSuccessAnimation = true
+            }
+        } else {
+            showMismatchAlert = true
+        }
+    }
+    
+    private func resetEntries() {
+        firstEntry.removeAll()
+        secondEntry.removeAll()
+        isConfirming = false
+    }
+}
+
+// MARK: - Success Icon View
+struct SuccessIconView: View {
+    @State private var scaleEffect: CGFloat = 0.0
+
+    var body: some View {
+        Image(systemName: "checkmark.circle.fill")
+            .resizable()
+            .aspectRatio(contentMode: .fit)
+            .frame(width: 100, height: 100)
+            .foregroundColor(.green)
+            .scaleEffect(scaleEffect)
+            .onAppear {
+                withAnimation(.spring(response: 0.6, dampingFraction: 0.4, blendDuration: 0)) {
+                    scaleEffect = 1.0
+                }
+            }
+    }
+}
+
+struct LockScreenView: View {
+    @EnvironmentObject var authManager: AuthManager
+    @State private var enteredCode: [Int] = []
+    @State private var isFaceIDEnabled = true
+    @State private var isAnimatingOut = false
+    @State private var shakeOffset: CGFloat = 0 // Смещение для дёргания замка
+    
+    private let codeLength = 6
+
+    var body: some View {
+        VStack(spacing: 20) {
+            HStack {
+                Spacer()
+                Button(action: logout) {
+                    Image(systemName: "rectangle.portrait.and.arrow.right")
+                        .font(.title2)
+                        .foregroundColor(.red)
+                        .padding(8)
+                        .background(Color.white.opacity(0.2))
+                        .clipShape(Circle())
+                        .shadow(radius: 5)
+                }
+                .padding(.top, 60)
+                .padding(.trailing, 20)
+            }
+            
+            Spacer()
+            
+            Image(systemName: "lock.fill")
+                .font(.system(size: 40))
+                .padding()
+                .foregroundColor(.white)
+                .offset(x: shakeOffset) // Применяем смещение для дёргания замка
+            
+            Text("Приложение заблокировано")
+                .font(.title2)
+                .foregroundColor(.white)
+            
+            HStack(spacing: 10) {
+                ForEach(0..<codeLength, id: \.self) { index in
+                    Circle()
+                        .frame(width: 15, height: 15)
+                        .foregroundColor(index < enteredCode.count ? .white : .clear)
+                        .overlay(
+                            Circle()
+                                .stroke(Color.white, lineWidth: 1)
+                        )
+                }
+            }
+            
+            Spacer()
+            
+            VStack(spacing: 15) {
+                ForEach(1...3, id: \.self) { row in
+                    HStack(spacing: 15) {
+                        ForEach(1...3, id: \.self) { column in
+                            let number = (row - 1) * 3 + column
+                            NumberButton(number: number, action: handleInput)
+                        }
+                    }
+                }
+                
+                HStack(spacing: 15) {
+                    if isFaceIDEnabled {
+                        FaceIDButton(action: authenticateWithFaceID)
+                    } else {
+                        Spacer()
+                    }
+                    
+                    NumberButton(number: 0, action: handleInput)
+                    
+                    DeleteButton(action: deleteLastDigit)
+                }
+            }
+            .padding(.bottom, 60)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(LinearGradient(gradient: Gradient(colors: [Color.blue, Color.green]), startPoint: .top, endPoint: .bottom))
+        .ignoresSafeArea()
+        .offset(y: isAnimatingOut ? -UIScreen.main.bounds.height : 0)
+        .opacity(isAnimatingOut ? 0 : 1)
+        .onChange(of: authManager.isPasswordEntered) { newValue in
+            if newValue {
+                withAnimation(.easeInOut(duration: 0.8)) {
+                    isAnimatingOut = true
+                }
+            }
+        }
+    }
+    
+    private func handleInput(_ number: Int) {
+        withAnimation {
+            if enteredCode.count < codeLength {
+                enteredCode.append(number)
+            }
+            
+            if enteredCode.count == codeLength {
+                verifyCode()
+            }
+        }
+    }
+    
+    private func deleteLastDigit() {
+        withAnimation {
+            if !enteredCode.isEmpty {
+                enteredCode.removeLast()
+            }
+        }
+    }
+    
+    private func verifyCode() {
+        if authManager.verifyPassword(enteredCode) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                authManager.isPasswordEntered = true
+            }
+        } else {
+            withAnimation {
+                enteredCode.removeAll()
+            }
+            triggerShakeAnimation() // Запускаем анимацию дёргания замка
+        }
+    }
+    
+    private func authenticateWithFaceID() {
+        authManager.authenticateWithBiometrics { success in
+            if success {
+                DispatchQueue.main.async {
+                    authManager.isPasswordEntered = true
+                }
+            }
+        }
+    }
+    
+    private func logout() {
+        authManager.logout()
+    }
+    
+    // MARK: - Shake Animation
+    
+    private func triggerShakeAnimation() {
+        let shakeSequence: [CGFloat] = [-10, 10, -8, 8, -5, 0] // Последовательность смещений для дёргания
+        for (index, offset) in shakeSequence.enumerated() {
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.05) {
+                withAnimation(.spring(response: 0.2, dampingFraction: 0.5)) {
+                    shakeOffset = offset
+                }
+            }
+        }
+    }
+}
+
+struct NumberButton: View {
+    let number: Int
+    let action: (Int) -> Void
+    @State private var isPressed = false
+    
+    var body: some View {
+        Button(action: {
+            action(number)
+        }) {
+            Text("\(number)")
+                .font(.title)
+                .foregroundColor(.white)
+                .frame(width: 80, height: 80)
+                .background(Color.blue.opacity(0.2))
+                .clipShape(Circle())
+                .shadow(radius: 5)
+                .scaleEffect(isPressed ? 0.85 : 1.0) // Глубокое нажатие
+        }
+        .onLongPressGesture(minimumDuration: 0.1, pressing: { pressing in
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.4, blendDuration: 0.2)) {
+                isPressed = pressing
+            }
+        }) {
+            action(number)
+        }
+    }
+}
+
+struct DeleteButton: View {
+    let action: () -> Void
+    @State private var isPressed = false
+    
+    var body: some View {
+        Button(action: {
+            action()
+        }) {
+            Text("Удалить")
+                .font(.headline)
+                .foregroundColor(.white)
+                .frame(width: 80, height: 80)
+                .background(Color.red.opacity(0.2))
+                .clipShape(Circle())
+                .shadow(radius: 5)
+                .scaleEffect(isPressed ? 0.85 : 1.0) // Глубокое нажатие
+        }
+        .onLongPressGesture(minimumDuration: 0.1, pressing: { pressing in
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.4, blendDuration: 0.2)) {
+                isPressed = pressing
+            }
+        }) {
+            action()
+        }
+    }
+}
+
+struct FaceIDButton: View {
+    let action: () -> Void
+    @State private var isPressed = false
+    
+    var body: some View {
+        Button(action: {
+            action()
+        }) {
+            Image(systemName: "faceid")
+                .font(.largeTitle)
+                .foregroundColor(.white)
+                .frame(width: 80, height: 80)
+                .background(Color.blue.opacity(0.2))
+                .clipShape(Circle())
+                .shadow(radius: 5)
+                .scaleEffect(isPressed ? 0.85 : 1.0) // Глубокое нажатие
+        }
+        .onLongPressGesture(minimumDuration: 0.1, pressing: { pressing in
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.4, blendDuration: 0.2)) {
+                isPressed = pressing
+            }
+        }) {
+            action()
+        }
+    }
+}
 
 // MARK: - Previews
 struct ContentView_Previews: PreviewProvider {
