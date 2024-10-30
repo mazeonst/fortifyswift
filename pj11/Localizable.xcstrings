@@ -24,6 +24,9 @@
     "%lld" : {
 
     },
+    "%lld%%" : {
+
+    },
     "cancel_button" : {
       "extractionState" : "manual",
       "localizations" : {
