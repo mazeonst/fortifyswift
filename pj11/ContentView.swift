@@ -1768,10 +1768,6 @@ struct LockScreenView: View {
                     Image(systemName: "rectangle.portrait.and.arrow.right")
                         .font(.title2)
                         .foregroundColor(.red)
-                        .padding(8)
-                        .background(Color.white.opacity(0.2))
-                        .clipShape(Circle())
-                        .shadow(radius: 5)
                 }
                 .padding(.top, 60)
                 .padding(.trailing, 20)
@@ -1783,7 +1779,7 @@ struct LockScreenView: View {
                 .font(.system(size: 40))
                 .padding()
                 .foregroundColor(.white)
-                .offset(x: shakeOffset) // Применяем смещение для дёргания замка
+                .offset(x: shakeOffset)
             
             Text("Приложение заблокировано")
                 .font(.title2)
@@ -1841,6 +1837,7 @@ struct LockScreenView: View {
         }
     }
     
+    // MARK: - Actions
     private func handleInput(_ number: Int) {
         withAnimation {
             if enteredCode.count < codeLength {
@@ -1870,7 +1867,7 @@ struct LockScreenView: View {
             withAnimation {
                 enteredCode.removeAll()
             }
-            triggerShakeAnimation() // Запускаем анимацию дёргания замка
+            triggerShakeAnimation()
         }
     }
     
@@ -1891,7 +1888,7 @@ struct LockScreenView: View {
     // MARK: - Shake Animation
     
     private func triggerShakeAnimation() {
-        let shakeSequence: [CGFloat] = [-10, 10, -8, 8, -5, 0] // Последовательность смещений для дёргания
+        let shakeSequence: [CGFloat] = [-10, 10, -8, 8, -5, 0]
         for (index, offset) in shakeSequence.enumerated() {
             DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.05) {
                 withAnimation(.spring(response: 0.2, dampingFraction: 0.5)) {
