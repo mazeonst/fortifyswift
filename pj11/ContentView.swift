@@ -1,3 +1,10 @@
+//
+//  Fortify
+//
+//  Created by Mikhail Mirmikov
+//
+
+
 import SwiftUI
 import UIKit
 import MessageUI
@@ -1368,23 +1375,6 @@ struct PasswordCardView: View {
                     Image(systemName: isPasswordVisible ? "eye.slash" : "eye")
                         .foregroundColor(.blue)
                 }
-            }
-            
-            if isPasswordVisible {
-                Text("Логин: \(password.username)")
-                    .font(.subheadline)
-                    .foregroundColor(Color(.secondaryLabel)) // Динамический цвет для второстепенного текста
-                
-                Text(password.password_value)
-                    .font(.system(.body, design: .monospaced))
-                    .foregroundColor(Color(.label)) // Динамический цвет для пароля
-            } else {
-                Text("Пароль скрыт")
-                    .font(.subheadline)
-                    .foregroundColor(Color(.secondaryLabel)) // Динамический цвет для скрытого текста
-            }
-
-            HStack {
                 Button(action: {
                     UIPasteboard.general.string = password.password_value
                     withAnimation {
@@ -1398,31 +1388,35 @@ struct PasswordCardView: View {
                 }) {
                     Image(systemName: "doc.on.doc")
                         .foregroundColor(.blue)
-                    Text("Копировать")
-                        .foregroundColor(.blue)
                 }
-                
-                Spacer()
-                
-                if isCopied {
-                    Text("Скопировано!")
-                        .font(.caption)
-                        .foregroundColor(.green)
-                        .transition(.opacity)
-                }
-            }
-
-            Button(action: {
-                deletePassword()
-            }) {
-                HStack {
+                Button(action: {
+                    deletePassword()
+                }) {
                     Image(systemName: "trash")
                         .foregroundColor(.red)
-                    Text("Удалить")
-                        .foregroundColor(.red)
                 }
             }
-            .padding(.top, 5)
+            
+            if isPasswordVisible {
+                Text("Логин: \(password.username)")
+                    .font(.subheadline)
+                    .foregroundColor(Color(.secondaryLabel))
+                
+                Text(password.password_value)
+                    .font(.system(.body, design: .monospaced))
+                    .foregroundColor(Color(.label))
+            } else {
+                Text("Пароль скрыт")
+                    .font(.subheadline)
+                    .foregroundColor(Color(.secondaryLabel))
+            }
+
+            if isCopied {
+                Text("Скопировано!")
+                    .font(.caption)
+                    .foregroundColor(.green)
+                    .transition(.opacity)
+            }
         }
         .padding()
         .background(Color(UIColor.secondarySystemBackground)) // Динамический фон для карточки
@@ -1444,7 +1438,6 @@ struct PasswordCardView: View {
             "password_name": password.password_name
         ]
 
-        // Преобразуем словарь в JSON
         do {
             let jsonData = try JSONSerialization.data(withJSONObject: body, options: [])
             request.httpBody = jsonData
@@ -1503,6 +1496,7 @@ struct PasswordData: Codable, Equatable {
         ]
     }
 }
+
 
 // MARK: - SettingsView
 struct SettingsView: View {
