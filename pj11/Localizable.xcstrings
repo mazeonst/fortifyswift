@@ -1115,7 +1115,6 @@
       }
     },
     "Сохраненные пароли" : {
-      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {

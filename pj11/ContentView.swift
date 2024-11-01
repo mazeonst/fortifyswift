@@ -714,8 +714,19 @@ struct PasswordGeneratorView: View {
         ZStack {
             NavigationView {
                 VStack {
+                                    // Заголовок
+                                    HStack(spacing: 8) {
+                                        Image(systemName: "key.fill")
+                                            .foregroundColor(.blue)
+                                        Text("Генератор паролей")
+                                            .font(.system(size: 24, weight: .bold, design: .rounded))
+                                            .foregroundColor(.primary)
+                                    }
+                                    .padding(.bottom, 5)
+                    
                     VStack {
                         HStack {
+                            
                             VStack {
                                 TextField("Количество паролей", text: $numberOfPasswords)
                                     .keyboardType(.numberPad)
@@ -818,7 +829,6 @@ struct PasswordGeneratorView: View {
                         .padding(.bottom, 80)
                     }
                 }
-                .navigationTitle("Генератор паролей")
             }
         }
         .sheet(isPresented: $showSavePasswordView) {
@@ -1068,6 +1078,15 @@ struct SavedPasswordsView: View {
         NavigationView {
             ZStack { // Используем ZStack для наложения кнопки поверх контента
                 VStack {
+                                    // Заголовок
+                                    HStack(spacing: 8) {
+                                        Image(systemName: "folder.fill")
+                                            .foregroundColor(.blue)
+                                        Text("Сохраненные пароли")
+                                            .font(.system(size: 24, weight: .bold, design: .rounded))
+                                            .foregroundColor(.primary)
+                                    }
+                                    .padding(.top, 5)
                     // Поле поиска с анимацией
                     HStack {
                         HStack {
@@ -1158,7 +1177,6 @@ struct SavedPasswordsView: View {
                     .padding([.trailing, .bottom], 10) // Добавляем отступы от края
                 }
             }
-            .navigationTitle("Сохраненные")
             .onAppear(perform: loadPasswords)
         }
     }
@@ -1513,6 +1531,16 @@ struct SettingsView: View {
     var body: some View {
         NavigationView {
             VStack {
+                // Новый заголовок для настройки
+                HStack(spacing: 8) {
+                    Image(systemName: "gearshape.fill")
+                        .foregroundColor(.blue)
+                    Text("Настройки")
+                        .font(.system(size: 24, weight: .bold, design: .rounded))
+                        .foregroundColor(.primary)
+                }
+                .padding(.top, 5)
+                
                 ScrollView {
                     VStack(spacing: 20) {
                         // Настройка пароля
@@ -1520,10 +1548,8 @@ struct SettingsView: View {
                             Toggle("Использовать код-пароль", isOn: $isPasswordEnabled)
                                 .onChange(of: isPasswordEnabled) { value in
                                     if value && !authManager.isPasswordSet() {
-                                        // Только если пароль ещё не установлен, показать экран установки
                                         showingSetPasswordView = true
                                     } else if !value {
-                                        // Удаляем пароль, если выключен переключатель
                                         authManager.removePassword()
                                         isPasswordEnabled = false
                                     }
@@ -1568,7 +1594,6 @@ struct SettingsView: View {
                                 
                                 Spacer()
                                 
-                                // Кнопка для копирования
                                 Button(action: {
                                     UIPasteboard.general.string = authManager.seedPhrase
                                     isCopied = true
@@ -1581,7 +1606,6 @@ struct SettingsView: View {
                                 }
                                 .padding(.trailing, 10)
                                 
-                                // Кнопка для отображения/скрытия сид-фразы
                                 Button(action: {
                                     withAnimation {
                                         isSeedPhraseVisible.toggle()
@@ -1662,7 +1686,6 @@ struct SettingsView: View {
                         isPasswordEnabled = authManager.isPasswordSet()
                     }
             }
-            .navigationTitle("Настройки")
         }
     }
 }
