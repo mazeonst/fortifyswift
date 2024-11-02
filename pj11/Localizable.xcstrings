@@ -346,6 +346,9 @@
         }
       }
     },
+    "Login: %@" : {
+
+    },
     "logout_button" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -926,6 +929,7 @@
       }
     },
     "Логин: %@" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {

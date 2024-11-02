@@ -1416,7 +1416,7 @@ struct PasswordCardView: View {
             }
             
             if isPasswordVisible {
-                Text("Логин: \(password.username)")
+                Text("Login: \(password.email)")
                     .font(.subheadline)
                     .foregroundColor(Color(.secondaryLabel))
                 
