@@ -1,17 +1,18 @@
 //
 //  Fortify
 //
-//  Created by Mikhail Mirmikov
+//  Created by Mikhail Mirmikov on 02.09.2024
 //
-
-
 import SwiftUI
 import UIKit
 import MessageUI
 import LocalAuthentication
 import KeychainSwift
 import Foundation
-
+////////////////////куаукпукукпукп  куп ук п ук пукук
+///ук
+///п
+///
 @main
 struct PasswordGeneratorApp: App {
     @StateObject var authManager = AuthManager()
@@ -1376,6 +1377,7 @@ struct PasswordCardView: View {
     @Binding var savedPasswords: [PasswordData]
     @State private var isPasswordVisible: Bool = false
     @State private var isCopied: Bool = false
+    @State private var showEditPasswordView = false
     @EnvironmentObject var authManager: AuthManager
 
     var body: some View {
@@ -1383,7 +1385,7 @@ struct PasswordCardView: View {
             HStack {
                 Text(password.service)
                     .font(.headline)
-                    .foregroundColor(Color(.label)) // Динамический цвет для заголовка
+                    .foregroundColor(Color(.label))
                 Spacer()
                 Button(action: {
                     withAnimation {
@@ -1406,6 +1408,12 @@ struct PasswordCardView: View {
                 }) {
                     Image(systemName: "doc.on.doc")
                         .foregroundColor(.blue)
+                }
+                Button(action: {
+                    showEditPasswordView = true
+                }) {
+                    Image(systemName: "pencil")
+                        .foregroundColor(.orange)
                 }
                 Button(action: {
                     deletePassword()
@@ -1440,9 +1448,80 @@ struct PasswordCardView: View {
         .background(Color(UIColor.secondarySystemBackground)) // Динамический фон для карточки
         .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+        .sheet(isPresented: $showEditPasswordView) {
+            EditPasswordView(
+                isPresented: $showEditPasswordView,
+                password: password,
+                updatePassword: { name, service, email, username, newValue in
+                    updatePassword(passwordName: name, service: service, email: email, username: username, newPasswordValue: newValue)
+                }
+            )
+        }
     }
 
-    // Функция для отправки запроса на удаление пароля
+    func updatePassword(passwordName: String, service: String, email: String, username: String, newPasswordValue: String) {
+        guard let url = URL(string: "http://localhost:8000/update_password") else { return }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let body: [String: Any] = [
+            "seed": authManager.seedPhrase,
+            "password_data": [
+                "password_name": passwordName,
+                "new_password_value": newPasswordValue,
+                "service": service,
+                "email": email,
+                "username": username
+            ]
+        ]
+
+        do {
+            let jsonData = try JSONSerialization.data(withJSONObject: body, options: [])
+            request.httpBody = jsonData
+        } catch {
+            print("Ошибка сериализации JSON: \(error)")
+            return
+        }
+
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                print("Ошибка при обновлении пароля: \(error)")
+                return
+            }
+
+            DispatchQueue.main.async {
+                loadPasswords()
+            }
+        }.resume()
+    }
+
+    func loadPasswords() {
+        guard let url = URL(string: "http://localhost:8000/get_passwords?seed=\(authManager.seedPhrase)") else { return }
+
+        URLSession.shared.dataTask(with: url) { data, response, error in
+            if let error = error {
+                print("Ошибка загрузки паролей: \(error)")
+                return
+            }
+
+            guard let data = data else {
+                print("Нет данных")
+                return
+            }
+
+            do {
+                let decodedResponse = try JSONDecoder().decode(PasswordsResponse.self, from: data)
+                DispatchQueue.main.async {
+                    self.savedPasswords = decodedResponse.passwords
+                }
+            } catch {
+                print("Ошибка декодирования данных: \(error)")
+            }
+        }.resume()
+    }
+
     func deletePassword() {
         guard let url = URL(string: "http://localhost:8000/delete_password") else { return }
 
@@ -1450,7 +1529,6 @@ struct PasswordCardView: View {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
-        // Данные для отправки на сервер
         let body: [String: Any] = [
             "seed": authManager.seedPhrase,
             "password_name": password.password_name
@@ -1479,7 +1557,6 @@ struct PasswordCardView: View {
                 let responseJSON = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any]
                 if let message = responseJSON?["message"] as? String {
                     print("Сообщение от сервера: \(message)")
-                    // Удаляем пароль из списка на клиенте
                     DispatchQueue.main.async {
                         withAnimation {
                             savedPasswords.removeAll { $0.password_name == password.password_name }
@@ -1689,6 +1766,108 @@ struct SettingsView: View {
         }
     }
 }
+
+struct EditPasswordView: View {
+    @Binding var isPresented: Bool
+    var password: PasswordData
+    var updatePassword: (String, String, String, String, String) -> Void
+
+    @State private var service: String
+    @State private var email: String
+    @State private var username: String
+    @State private var passwordValue: String
+    @State private var isPasswordVisible = true
+
+    init(isPresented: Binding<Bool>, password: PasswordData, updatePassword: @escaping (String, String, String, String, String) -> Void) {
+        self._isPresented = isPresented
+        self.password = password
+        self.updatePassword = updatePassword
+        _service = State(initialValue: password.service)
+        _email = State(initialValue: password.email)
+        _username = State(initialValue: password.username)
+        _passwordValue = State(initialValue: password.password_value)
+    }
+
+    var body: some View {
+        NavigationView {
+            VStack {
+                VStack {
+                    CustomTextField(placeholder: "Сервис", text: $service)
+                    CustomTextField(placeholder: "Email", text: $email)
+                    CustomTextField(placeholder: "Имя пользователя", text: $username)
+                }
+                .padding()
+                .background(Color(UIColor.systemBackground))
+                .cornerRadius(12)
+                .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                .padding([.leading, .trailing], 20)
+
+                VStack {
+                    HStack {
+                        if isPasswordVisible {
+                            TextField("Пароль", text: $passwordValue)
+                                .padding()
+                                .background(Color(UIColor.secondarySystemBackground))
+                                .cornerRadius(8)
+                        } else {
+                            SecureField("Пароль", text: $passwordValue)
+                                .padding()
+                                .background(Color(UIColor.secondarySystemBackground))
+                                .cornerRadius(8)
+                        }
+                        Button(action: { isPasswordVisible.toggle() }) {
+                            Image(systemName: isPasswordVisible ? "eye.slash.fill" : "eye.fill")
+                                .foregroundColor(.blue)
+                        }
+                        .padding(.trailing, 5)
+                    }
+                }
+                .padding()
+                .background(Color(UIColor.systemBackground))
+                .cornerRadius(12)
+                .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                .padding([.leading, .trailing], 20)
+
+                Spacer()
+
+                Button(action: {
+                    updatePassword(password.password_name, service, email, username, passwordValue)
+                    isPresented = false
+                }) {
+                    Text("Сохранить изменения")
+                        .fontWeight(.bold)
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(Color.blue.opacity(0.2))
+                        .foregroundColor(.blue)
+                        .cornerRadius(12)
+                        .shadow(radius: 5)
+                        .padding([.leading, .trailing], 20)
+                }
+                .padding(.bottom, 20)
+            }
+            .navigationBarTitle("Редактировать пароль", displayMode: .inline)
+            .navigationBarItems(leading: Button("Отмена") {
+                isPresented = false
+            })
+        }
+    }
+
+    struct CustomTextField: View {
+        var placeholder: String
+        @Binding var text: String
+
+        var body: some View {
+            TextField(placeholder, text: $text)
+                .padding()
+                .background(Color(UIColor.secondarySystemBackground))
+                .cornerRadius(8)
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.gray.opacity(0.5), lineWidth: 1))
+                .padding(.bottom, 10)
+        }
+    }
+}
+
 
 // MARK: - SetPasswordView
 struct SetPasswordView: View {
@@ -2090,4 +2269,3 @@ struct SavedPasswordsView_Previews: PreviewProvider {
         SavedPasswordsView()
     }
 }
-
