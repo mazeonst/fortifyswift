@@ -130,7 +130,22 @@ class AuthManager: ObservableObject {
             completion(false)
         }
     }
-}
+    func exportPasswords(completion: @escaping (String?) -> Void) {
+            guard let url = URL(string: "http://localhost:8000/export_passwords?seed=\(self.seedPhrase)") else {
+                completion(nil)
+                return
+            }
+            
+            URLSession.shared.dataTask(with: url) { data, response, error in
+                if let data = data, let json = try? JSONSerialization.jsonObject(with: data) as? [String: String], let passwords = json["passwords"] {
+                    completion(passwords)
+                } else {
+                    completion(nil)
+                }
+            }.resume()
+        }
+    }
+
 
 struct MailView: UIViewControllerRepresentable {
     @Environment(\.presentationMode) var presentation
@@ -1601,14 +1616,15 @@ struct SettingsView: View {
     @State private var mailResult: Result<MFMailComposeResult, Error>? = nil
     @State private var isCopied: Bool = false
     @State private var showingSetPasswordView = false
+    @State private var showingSecurityView = false
     @State private var isPasswordEnabled = false
     @State private var isBiometricsEnabled = false
     @State private var hasCheckedPasswordOnce = false
-
+    
     var body: some View {
         NavigationView {
             VStack {
-                // Новый заголовок для настройки
+                // Заголовок настроек
                 HStack(spacing: 8) {
                     Image(systemName: "gearshape.fill")
                         .foregroundColor(.blue)
@@ -1620,91 +1636,43 @@ struct SettingsView: View {
                 
                 ScrollView {
                     VStack(spacing: 20) {
-                        // Настройка пароля
-                        Section {
-                            Toggle("Использовать код-пароль", isOn: $isPasswordEnabled)
-                                .onChange(of: isPasswordEnabled) { value in
-                                    if value && !authManager.isPasswordSet() {
-                                        showingSetPasswordView = true
-                                    } else if !value {
-                                        authManager.removePassword()
-                                        isPasswordEnabled = false
-                                    }
-                                }
-                        }
-                        .padding()
-                        .background(Color(UIColor.secondarySystemBackground))
-                        .cornerRadius(10)
-                        .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
-                        
-                        // Биометрия
-                        Section {
-                            Toggle("Использовать биометрию", isOn: $isBiometricsEnabled)
-                                .onChange(of: isBiometricsEnabled) { value in
-                                    if value {
-                                        authManager.authenticateWithBiometrics { success in
-                                            if !success {
-                                                isBiometricsEnabled = false
-                                            }
-                                        }
-                                    }
-                                }
-                                .toggleStyle(SwitchToggleStyle(tint: Color(UIColor.systemBlue)))
-                        }
-                        .padding()
-                        .background(Color(UIColor.secondarySystemBackground))
-                        .cornerRadius(10)
-                        .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
-                        
-                        // Показ сид-фразы
-                        Section {
+                        // Кнопка для открытия экрана "Безопасность"
+                        Button(action: {
+                            showingSecurityView = true
+                        }) {
                             HStack {
-                                if isSeedPhraseVisible {
-                                    Text(authManager.seedPhrase)
-                                        .font(.system(.body, design: .monospaced))
-                                        .foregroundColor(Color(.label))
-                                } else {
-                                    Text("**********")
-                                        .font(.system(.body, design: .monospaced))
-                                        .foregroundColor(Color(.secondaryLabel))
-                                }
-                                
+                                Image(systemName: "lock.shield")
+                                    .foregroundColor(.blue)
+                                Text("Безопасность")
+                                    .fontWeight(.bold)
                                 Spacer()
-                                
-                                Button(action: {
-                                    UIPasteboard.general.string = authManager.seedPhrase
-                                    isCopied = true
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                                        isCopied = false
-                                    }
-                                }) {
-                                    Image(systemName: "doc.on.doc")
-                                        .foregroundColor(.blue)
-                                }
-                                .padding(.trailing, 10)
-                                
-                                Button(action: {
-                                    withAnimation {
-                                        isSeedPhraseVisible.toggle()
-                                    }
-                                }) {
-                                    Image(systemName: isSeedPhraseVisible ? "eye.slash.fill" : "eye.fill")
-                                        .foregroundColor(.blue)
-                                }
+                                Image(systemName: "chevron.right")
+                                    .foregroundColor(.gray)
                             }
-                            .contextMenu {
-                                Button(action: {
-                                    UIPasteboard.general.string = authManager.seedPhrase
-                                }) {
-                                    Text("Копировать")
-                                    Image(systemName: "doc.on.doc")
-                                }
-                            }
+                            .padding()
+                            .background(Color(UIColor.secondarySystemBackground))
+                            .cornerRadius(10)
+                            .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
                         }
-                        .padding()
-                        .background(Color(UIColor.secondarySystemBackground))
-                        .cornerRadius(10)
-                        .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                        .sheet(isPresented: $showingSecurityView) {
+                            SecuritySettingsView()
+                                .environmentObject(authManager)
+                        }
+                        
+                        // Кнопка для экспорта паролей
+                        Button(action: exportPasswords) {
+                            HStack {
+                                Image(systemName: "square.and.arrow.down")
+                                    .foregroundColor(.blue)
+                                Text("Экспортировать пароли")
+                                    .fontWeight(.bold)
+                                Spacer()
+                            }
+                            .padding()
+                            .background(Color(UIColor.secondarySystemBackground))
+                            .cornerRadius(10)
+                            .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                        }
                         
                         // Кнопка "Contact"
                         Section {
@@ -1733,7 +1701,7 @@ struct SettingsView: View {
                         hasCheckedPasswordOnce = true
                     }
                 }
-
+                
                 // Кнопка "Выйти из аккаунта"
                 Button(action: {
                     authManager.logout()
@@ -1757,13 +1725,165 @@ struct SettingsView: View {
             .sheet(isPresented: $showingMailView) {
                 MailView(result: self.$mailResult)
             }
-            .sheet(isPresented: $showingSetPasswordView) {
-                SetPasswordView(isPresented: $showingSetPasswordView)
-                    .onDisappear {
-                        isPasswordEnabled = authManager.isPasswordSet()
+        }
+    }
+    
+    private func exportPasswords() {
+        authManager.exportPasswords { passwords in
+            guard let passwords = passwords else { return }
+            
+            // Форматируем текущую дату и время для имени файла
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "yyyy-MM-dd_HH-mm-ss"
+            let dateString = dateFormatter.string(from: Date())
+            let fileName = "FortifyPasswords_\(dateString).txt"
+            
+            let fileURL = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
+            
+            do {
+                try passwords.write(to: fileURL, atomically: true, encoding: .utf8)
+                
+                DispatchQueue.main.async {
+                    if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                       let rootVC = windowScene.windows.first?.rootViewController {
+                        let activityVC = UIActivityViewController(activityItems: [fileURL], applicationActivities: nil)
+                        activityVC.completionWithItemsHandler = { _, completed, _, _ in
+                            if completed {
+                                print("Экспорт завершен успешно")
+                            }
+                        }
+                        rootVC.present(activityVC, animated: true, completion: nil)
                     }
+                }
+            } catch {
+                print("Ошибка при записи файла: \(error)")
             }
         }
+    }
+}
+
+
+struct SecuritySettingsView: View {
+    @EnvironmentObject var authManager: AuthManager
+    @State private var isSeedPhraseVisible: Bool = false
+    @State private var showingSetPasswordView = false
+    @State private var isPasswordEnabled = false
+    @State private var isBiometricsEnabled = false
+    @State private var isCopied: Bool = false
+    @State private var hasCheckedPasswordOnce = false
+
+    var body: some View {
+        VStack {
+            // Заголовок для экрана "Безопасность"
+            HStack(spacing: 8) {
+                Image(systemName: "lock.shield.fill")
+                    .foregroundColor(.blue)
+                Text("Безопасность")
+                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                    .foregroundColor(.primary)
+            }
+            .padding(.top, 10)
+
+            ScrollView {
+                VStack(spacing: 20) {
+                    // Настройка пароля
+                    Section {
+                        Toggle("Использовать код-пароль", isOn: $isPasswordEnabled)
+                            .onChange(of: isPasswordEnabled) { value in
+                                if value {
+                                    // Если включаем пароль и он не установлен, открываем экран установки пароля
+                                    if !authManager.isPasswordSet() {
+                                        showingSetPasswordView = true
+                                    }
+                                } else {
+                                    // Отключаем пароль
+                                    authManager.removePassword()
+                                    isPasswordEnabled = false
+                                }
+                            }
+                            .padding()
+                            .background(Color(UIColor.secondarySystemBackground))
+                            .cornerRadius(10)
+                            .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 3)
+                    }
+
+                    // Биометрия
+                    Section {
+                        Toggle("Использовать биометрию", isOn: $isBiometricsEnabled)
+                            .onChange(of: isBiometricsEnabled) { value in
+                                if value {
+                                    authManager.authenticateWithBiometrics { success in
+                                        if !success {
+                                            isBiometricsEnabled = false
+                                        }
+                                    }
+                                }
+                            }
+                            .padding()
+                            .background(Color(UIColor.secondarySystemBackground))
+                            .cornerRadius(10)
+                            .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 3)
+                    }
+
+                    // Показ сид-фразы
+                    Section {
+                        HStack {
+                            if isSeedPhraseVisible {
+                                Text(authManager.seedPhrase)
+                                    .font(.system(.body, design: .monospaced))
+                                    .foregroundColor(Color(.label))
+                            } else {
+                                Text("**********")
+                                    .font(.system(.body, design: .monospaced))
+                                    .foregroundColor(Color(.secondaryLabel))
+                            }
+
+                            Spacer()
+
+                            Button(action: {
+                                UIPasteboard.general.string = authManager.seedPhrase
+                                isCopied = true
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                    isCopied = false
+                                }
+                            }) {
+                                Image(systemName: "doc.on.doc")
+                                    .foregroundColor(.blue)
+                            }
+
+                            Button(action: {
+                                withAnimation {
+                                    isSeedPhraseVisible.toggle()
+                                }
+                            }) {
+                                Image(systemName: isSeedPhraseVisible ? "eye.slash.fill" : "eye.fill")
+                                    .foregroundColor(.blue)
+                            }
+                        }
+                        .padding()
+                        .background(Color(UIColor.secondarySystemBackground))
+                        .cornerRadius(10)
+                        .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 3)
+                    }
+                }
+                .padding()
+            }
+            .onAppear {
+                // Проверяем состояние пароля при загрузке
+                if !hasCheckedPasswordOnce {
+                    isPasswordEnabled = authManager.isPasswordSet()
+                    hasCheckedPasswordOnce = true
+                }
+            }
+            .sheet(isPresented: $showingSetPasswordView, onDismiss: {
+                // Обновляем состояние после установки пароля
+                isPasswordEnabled = authManager.isPasswordSet()
+            }) {
+                SetPasswordView(isPresented: $showingSetPasswordView)
+            }
+        }
+        .padding()
+        .background(Color(UIColor.systemGroupedBackground).edgesIgnoringSafeArea(.all))
     }
 }
 
