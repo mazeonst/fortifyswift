@@ -894,6 +894,7 @@
       }
     },
     "Использовать заглавные буквы" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -907,6 +908,7 @@
 
     },
     "Использовать специальные символы" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -917,6 +919,7 @@
       }
     },
     "Использовать цифры" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {

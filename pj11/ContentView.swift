@@ -777,25 +777,30 @@ struct PasswordGeneratorView: View {
                                 .frame(width: 100, height: 100)
                                 .padding(.leading, 10)
                         }
+                        Spacer().frame(height: 20)
+                        // Кнопки для настроек
+                                                HStack(spacing: 30) {
+                                                    circularButton(
+                                                        icon: "arrow.up",
+                                                        text: "Заглавные",
+                                                        isActive: useUppercase,
+                                                        action: { useUppercase.toggle(); updatePasswordStrength() }
+                                                    )
 
-                        Toggle(isOn: $useUppercase) {
-                            Text("Использовать заглавные буквы")
-                        }
-                        .padding(.top, 10)
-                        .onChange(of: useUppercase) { _ in updatePasswordStrength() }
+                                                    circularButton(
+                                                        icon: "123.rectangle",
+                                                        text: "Цифры",
+                                                        isActive: useNumbers,
+                                                        action: { useNumbers.toggle(); updatePasswordStrength() }
+                                                    )
 
-                        Toggle(isOn: $useNumbers) {
-                            Text("Использовать цифры")
-                        }
-                        .padding(.top, 10)
-                        .onChange(of: useNumbers) { _ in updatePasswordStrength() }
-
-                        Toggle(isOn: $useSpecialCharacters) {
-                            Text("Использовать специальные символы")
-                        }
-                        .padding(.top, 10)
-                        .onChange(of: useSpecialCharacters) { _ in updatePasswordStrength() }
-
+                                                    circularButton(
+                                                        icon: "asterisk.circle",
+                                                        text: "Символы",
+                                                        isActive: useSpecialCharacters,
+                                                        action: { useSpecialCharacters.toggle(); updatePasswordStrength() }
+                                                    )
+                                                }
                         Button(action: {
                             generatePasswords()
                         }) {
@@ -863,6 +868,28 @@ struct PasswordGeneratorView: View {
                 .environmentObject(authManager)
         }
     }
+    private func circularButton(icon: String, text: String, isActive: Bool, action: @escaping () -> Void) -> some View {
+            Button(action: action) {
+                VStack {
+                    ZStack {
+                        Circle()
+                            .fill(isActive ? Color.blue : Color(UIColor.secondarySystemBackground))
+                            .frame(width: 60, height: 60)
+                            .shadow(color: isActive ? Color.blue.opacity(0.4) : Color.black.opacity(0.1), radius: 5, x: 0, y: 3)
+
+                        Image(systemName: icon)
+                            .font(.system(size: 24))
+                            .foregroundColor(isActive ? .white : .gray)
+                    }
+
+                    Text(text)
+                        .font(.caption)
+                        .foregroundColor(.primary)
+                }
+            }
+            .buttonStyle(PlainButtonStyle())
+        }
+    
     func savePassword(service: String, email: String, username: String, password: String) {
             // Отправка пароля на сервер для сохранения
             guard let url = URL(string: "http://localhost:8000/save_password") else { return }
