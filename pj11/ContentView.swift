@@ -22,14 +22,14 @@ struct PasswordGeneratorApp: App {
                         .environmentObject(authManager)
                         .preferredColorScheme(.none) // Автоматическое переключение между светлой и темной темами
                 } else {
-                    LockScreenView() // Новый экран блокировки
+                    LockScreenView()
                         .environmentObject(authManager)
                         .preferredColorScheme(.none)
                 }
             } else {
                 WelcomeView()
                     .environmentObject(authManager)
-                    .preferredColorScheme(.none) // Автоматическое переключение между светлой и темной темами
+                    .preferredColorScheme(.none)
             }
         }
     }
@@ -51,7 +51,6 @@ class AuthManager: ObservableObject {
             self.isLoggedIn = true
         }
         
-        // Если пароль установлен, задаём isPasswordEntered в false, иначе пропускаем LockScreenView
         if isPasswordSet() {
             self.isPasswordEntered = false
         } else {
@@ -84,7 +83,6 @@ class AuthManager: ObservableObject {
     func verifyPassword(_ password: [Int]) -> Bool {
         guard password.count == 6 else { return false }
         
-        // Получаем сохранённый пароль как строку и преобразуем его в массив цифр
         let savedPasswordString = keychain.get(passwordKey) ?? ""
         let savedPassword = savedPasswordString.compactMap { Int(String($0)) }
         
@@ -177,7 +175,7 @@ struct MailView: UIViewControllerRepresentable {
     func makeUIViewController(context: Context) -> MFMailComposeViewController {
         let vc = MFMailComposeViewController()
         vc.setToRecipients(["fortify@icloud.com"]) // Указываем адрес получателя
-        vc.setSubject("Поддержка Fortify") // Тема письма
+        vc.setSubject("Обращение в поддержку Fortify") // Тема письма
         vc.mailComposeDelegate = context.coordinator
         return vc
     }
@@ -191,138 +189,121 @@ struct WelcomeView: View {
     @State private var showSeedPhrase = false
     @State private var seedPhrase: String = ""
     @State private var showLoginView = false
-    @State private var isAnimating = false
-    @State private var currentSloganIndex = 0 // Для отслеживания текущего слогана
-
-    let slogans = [
-        "Генерация сложных паролей",
-        "Безопасный менеджмент паролей",
-        "Удобство хранения"
-    ]
-
+    
     var body: some View {
-        VStack {
+        VStack(spacing: 20) {
             Spacer()
-
-            // Название приложения Fortify с технологичным шрифтом
+            
+            // Название приложения
             Text("Fortify")
-                .font(.system(size: 44, weight: .heavy, design: .rounded)) // Технологичный и жирный шрифт
+                .font(.system(size: 44, weight: .heavy, design: .rounded))
                 .foregroundColor(.blue)
-                .padding(.bottom, 10)
-                .scaleEffect(isAnimating ? 1 : 0.9)
-                .opacity(isAnimating ? 1 : 0.7)
-                .animation(Animation.easeInOut(duration: 0.6).repeatForever(autoreverses: true), value: isAnimating)
-                .onAppear {
-                    isAnimating = true
-                }
-
-            // Слоганы с анимацией, расположены по центру
-            ZStack {
-                ForEach(0..<slogans.count, id: \.self) { index in
-                    AnimatedSloganView(text: slogans[index], index: index, currentSloganIndex: $currentSloganIndex)
-                }
-            }
-            .frame(height: UIScreen.main.bounds.height * 0.3)
-            .onAppear {
-                startSloganRotation()
-            }
-
-            Spacer()
-
-            // Кнопка "Регистрация"
+            
+            // Короткая фраза о том, что Fortify — безопасное хранилище паролей
+            Text("Создавайте и надёжно, безопасно храните свои пароли")
+                .font(.system(size: 18, weight: .bold))
+                .foregroundColor(.black)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 16)
+            
+            // Кнопка-плитка "Создать новое хранилище"
             Button(action: {
                 registerUser()
             }) {
-                Text("Регистрация")
-                    .font(.system(size: 20, weight: .bold, design: .rounded)) // Стильный и жирный шрифт
-                    .padding()
-                    .frame(maxWidth: .infinity)
-                    .background(LinearGradient(gradient: Gradient(colors: [Color.blue.opacity(0.8), Color.blue.opacity(0.5)]), startPoint: .top, endPoint: .bottom))
-                    .foregroundColor(.white)
-                    .cornerRadius(15)
-                    .shadow(color: Color.blue.opacity(0.5), radius: 10, x: 0, y: 5)
-                    .scaleEffect(isAnimating ? 1.05 : 1)
+                HStack(spacing: 16) {
+                    // Иконка "плюс" (пример)
+                    Image(systemName: "plus.circle.fill")
+                        .font(.system(size: 24))
+                        .foregroundColor(.blue)
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Создать новое хранилище")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(.black)
+                        
+                        Text("Сгенерировать Seed-фразу")
+                            .font(.system(size: 14))
+                            .foregroundColor(.gray)
+                    }
+                    
+                    Spacer()
+                }
+                .padding()
+                .background(Color.gray.opacity(0.1))
+                .cornerRadius(12)
             }
-            .padding(.horizontal)
-            .padding(.bottom, 20)
-            .animation(.easeInOut(duration: 0.2), value: isAnimating)
-
-            // Кнопка "Вход"
+            .padding(.horizontal, 16)
+            
+            // Кнопка-плитка "Подключить существующее хранилище"
             Button(action: {
                 showLoginView = true
             }) {
-                Text("Вход")
-                    .font(.system(size: 20, weight: .bold, design: .rounded)) // Технологичный и современный шрифт
-                    .padding()
-                    .frame(maxWidth: .infinity)
-                    .background(LinearGradient(gradient: Gradient(colors: [Color.green.opacity(0.8), Color.green.opacity(0.5)]), startPoint: .top, endPoint: .bottom))
-                    .foregroundColor(.white)
-                    .cornerRadius(15)
-                    .shadow(color: Color.green.opacity(0.5), radius: 10, x: 0, y: 5)
-                    .scaleEffect(isAnimating ? 1.05 : 1)
+                HStack(spacing: 16) {
+                    // Иконка "стрелка вниз" (пример)
+                    Image(systemName: "arrow.down.circle.fill")
+                        .font(.system(size: 24))
+                        .foregroundColor(.blue)
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Подключить хранилище")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(.black)
+                        
+                        Text("Импорт, восстановление или просмотр")
+                            .font(.system(size: 14))
+                            .foregroundColor(.gray)
+                    }
+                    
+                    Spacer()
+                }
+                .padding()
+                .background(Color.gray.opacity(0.1))
+                .cornerRadius(12)
             }
-            .padding(.horizontal)
-            .padding(.bottom, 40)
-            .animation(.easeInOut(duration: 0.2), value: isAnimating)
-
+            .padding(.horizontal, 16)
+            
             Spacer()
         }
-        .padding()
-        .background(LinearGradient(gradient: Gradient(colors: [Color.white, Color.blue.opacity(0.1)]), startPoint: .top, endPoint: .bottom)) // Фон
-        .edgesIgnoringSafeArea(.all) // Фон на весь экран
+        .padding(.bottom, 40)
+        .background(
+            LinearGradient(
+                gradient: Gradient(colors: [Color.white, Color.blue.opacity(0.05)]),
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        )
+        .edgesIgnoringSafeArea(.all)
+        // Модальное окно с Seed-фразой
         .sheet(isPresented: $showSeedPhrase) {
             SeedPhraseView(seedPhrase: $seedPhrase)
         }
+        // Модальное окно для входа
         .sheet(isPresented: $showLoginView) {
             LoginView()
         }
     }
     
-        func registerUser() {
-            guard let url = URL(string: "http://localhost:8000/register") else { return }
-
-            var request = URLRequest(url: url)
-            request.httpMethod = "POST"
-
-            URLSession.shared.dataTask(with: request) { data, response, error in
-                if let data = data {
-                    let response = try? JSONDecoder().decode([String: String].self, from: data)
-                    if let response = response, let seed = response["seed"] {
-                        DispatchQueue.main.async {
-                            self.seedPhrase = seed
-                            self.showSeedPhrase = true
-                        }
-                    }
-                }
-            }.resume()
-        }
-    
-    // Запуск бесконечной ротации слоганов
-        func startSloganRotation() {
-            Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
-                withAnimation(Animation.easeInOut(duration: 1.5)) {
-                    currentSloganIndex = (currentSloganIndex + 1) % slogans.count
+    /// Метод регистрации (пример)
+    func registerUser() {
+        guard let url = URL(string: "http://localhost:8000/register") else { return }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            guard let data = data else { return }
+            let response = try? JSONDecoder().decode([String: String].self, from: data)
+            
+            if let response = response, let seed = response["seed"] {
+                DispatchQueue.main.async {
+                    self.seedPhrase = seed
+                    self.showSeedPhrase = true
                 }
             }
-        }
-    }
-
-// Вспомогательная структура для создания анимаций слоганов
-struct AnimatedSloganView: View {
-    var text: String
-    var index: Int
-    @Binding var currentSloganIndex: Int
-
-    var body: some View {
-        Text(text)
-            .font(.system(size: 34, weight: .bold, design: .rounded)) // Жирный и технологичный шрифт для слоганов
-            .foregroundColor(.blue)
-            .opacity(currentSloganIndex == index ? 1 : 0)
-            .offset(x: currentSloganIndex == index ? 0 : 100)
-            .rotationEffect(.degrees(currentSloganIndex == index ? 0 : 10))
-            .animation(.spring(response: 0.8, dampingFraction: 0.5), value: currentSloganIndex)
+        }.resume()
     }
 }
+
 
 struct SeedPhraseView: View {
     @Binding var seedPhrase: String
