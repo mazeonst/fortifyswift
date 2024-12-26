@@ -705,6 +705,63 @@ struct ContentView: View {
 }
 
 // MARK: - Генератор паролей
+struct AdBannerView: View {
+    /// Ссылка для перехода при клике на баннер
+    let linkURL: String
+    /// Ссылка на изображение (URL-адрес)
+    let bannerImageURL: String
+
+    var body: some View {
+        // Кнопка, при нажатии открывает ссылку
+        Button(action: {
+            if let url = URL(string: linkURL) {
+                UIApplication.shared.open(url)
+            }
+        }) {
+            // Содержимое баннера
+            VStack {
+                // Загружаем картинку из интернета
+                AsyncImage(url: URL(string: bannerImageURL)) { phase in
+                    switch phase {
+                    case .empty:
+                        // Плейсхолдер во время загрузки
+                        ProgressView()
+                            .frame(height: 80)
+                    case .success(let image):
+                        // Успешно загруженное изображение
+                        image
+                            .resizable()
+                            .scaledToFit()
+                            .frame(height: 80)
+                            .cornerRadius(12)
+                            .padding(.horizontal, 10)
+                    case .failure(_):
+                        // Если изображение не загрузилось
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(height: 80)
+                            .foregroundColor(.red)
+                    @unknown default:
+                        EmptyView()
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .background(Color(UIColor.systemBackground))
+            .cornerRadius(24)
+            .shadow(
+                color: Color.black.opacity(0.1),
+                radius: 5, x: 0, y: 2
+            )
+            .padding(.horizontal, 20)
+            .padding(.vertical, 8)
+        }
+        // Убираем эффект системной кнопки
+        .buttonStyle(PlainButtonStyle())
+    }
+}
+// MARK: - Основной экран Генератора паролей
 struct PasswordGeneratorView: View {
     @State private var numberOfPasswords = "1"
     @State private var passwordLength = "16"
@@ -716,25 +773,29 @@ struct PasswordGeneratorView: View {
     @State private var selectedPassword = ""
     @State private var showSavePasswordView = false
     @State private var passwordStrengthPercentage: Double = 100
+    // ADS BANNERS
+    @State private var showBanner = false
+    
     @EnvironmentObject var authManager: AuthManager
+    
 
     var body: some View {
         ZStack {
             NavigationView {
                 VStack {
                     // Заголовок
-                        HStack(spacing: 8) {
-                            Image(systemName: "key.fill")
-                                .foregroundColor(.blue)
-                            Text("Генератор паролей")
-                                .font(.system(size: 24, weight: .bold, design: .rounded))
-                                .foregroundColor(.primary)
-                        }
-                            .padding(.bottom, 5)
+                    HStack(spacing: 8) {
+                        Image(systemName: "key.fill")
+                            .foregroundColor(.blue)
+                        Text("Генератор паролей")
+                            .font(.system(size: 24, weight: .bold, design: .rounded))
+                            .foregroundColor(.primary)
+                    }
+                    .padding(.bottom, 5)
                     
+                    // Блок настроек для генерации паролей
                     VStack {
                         HStack {
-                            
                             VStack {
                                 TextField("Количество паролей", text: $numberOfPasswords)
                                     .keyboardType(.numberPad)
@@ -759,29 +820,41 @@ struct PasswordGeneratorView: View {
                                 .padding(.leading, 10)
                         }
                         Spacer().frame(height: 20)
+                        
                         // Кнопки для настроек
-                                                HStack(spacing: 30) {
-                                                    circularButton(
-                                                        icon: "arrow.up",
-                                                        text: "Заглавные",
-                                                        isActive: useUppercase,
-                                                        action: { useUppercase.toggle(); updatePasswordStrength() }
-                                                    )
-
-                                                    circularButton(
-                                                        icon: "123.rectangle",
-                                                        text: "Цифры",
-                                                        isActive: useNumbers,
-                                                        action: { useNumbers.toggle(); updatePasswordStrength() }
-                                                    )
-
-                                                    circularButton(
-                                                        icon: "asterisk.circle",
-                                                        text: "Символы",
-                                                        isActive: useSpecialCharacters,
-                                                        action: { useSpecialCharacters.toggle(); updatePasswordStrength() }
-                                                    )
-                                                }
+                        HStack(spacing: 30) {
+                            circularButton(
+                                icon: "arrow.up",
+                                text: "Заглавные",
+                                isActive: useUppercase,
+                                action: {
+                                    useUppercase.toggle()
+                                    updatePasswordStrength()
+                                }
+                            )
+                            
+                            circularButton(
+                                icon: "123.rectangle",
+                                text: "Цифры",
+                                isActive: useNumbers,
+                                action: {
+                                    useNumbers.toggle()
+                                    updatePasswordStrength()
+                                }
+                            )
+                            
+                            circularButton(
+                                icon: "asterisk.circle",
+                                text: "Символы",
+                                isActive: useSpecialCharacters,
+                                action: {
+                                    useSpecialCharacters.toggle()
+                                    updatePasswordStrength()
+                                }
+                            )
+                        }
+                        
+                        // Кнопка для генерации паролей
                         Button(action: {
                             generatePasswords()
                         }) {
@@ -799,9 +872,18 @@ struct PasswordGeneratorView: View {
                     .padding()
                     .background(Color(UIColor.systemBackground))
                     .cornerRadius(24)
-                    .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                    .shadow(color: Color.black.opacity(0.1),
+                            radius: 5, x: 0, y: 2)
                     .padding([.leading, .trailing], 20)
-
+                    
+                    // Отображаем баннер, если showBanner == true
+                    if showBanner {
+                        AdBannerView(
+                            linkURL: "https://apple.com",
+                            bannerImageURL: "https://via.placeholder.com/400x100.png"
+                                    )
+                    }
+                    
                     // Секция с паролями
                     ScrollView {
                         VStack(spacing: 15) {
@@ -820,7 +902,7 @@ struct PasswordGeneratorView: View {
                                                 .foregroundColor(.blue)
                                         }
                                         .buttonStyle(PlainButtonStyle())
-
+                                        
                                         // Кнопка для сохранения пароля
                                         Button(action: {
                                             selectedPassword = password
@@ -835,7 +917,8 @@ struct PasswordGeneratorView: View {
                                 .padding()
                                 .background(Color(UIColor.systemBackground))
                                 .cornerRadius(24)
-                                .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                                .shadow(color: Color.black.opacity(0.1),
+                                        radius: 5, x: 0, y: 2)
                                 .padding([.leading, .trailing], 20)
                             }
                         }
@@ -844,67 +927,85 @@ struct PasswordGeneratorView: View {
                 }
             }
         }
+        // Вью для сохранения пароля
         .sheet(isPresented: $showSavePasswordView) {
-            SavePasswordView(isPresented: $showSavePasswordView, currentPassword: $selectedPassword, saveAction: savePassword)
-                .environmentObject(authManager)
+            SavePasswordView(
+                isPresented: $showSavePasswordView,
+                currentPassword: $selectedPassword,
+                saveAction: savePassword
+            )
+            .environmentObject(authManager)
         }
     }
+    
+    // MARK: - Кнопка настройки (круглая)
     private func circularButton(icon: String, text: String, isActive: Bool, action: @escaping () -> Void) -> some View {
-            Button(action: action) {
-                VStack {
-                    ZStack {
-                        Circle()
-                            .fill(isActive ? Color.blue : Color(UIColor.secondarySystemBackground))
-                            .frame(width: 60, height: 60)
-                            .shadow(color: isActive ? Color.blue.opacity(0.4) : Color.black.opacity(0.1), radius: 5, x: 0, y: 3)
-
-                        Image(systemName: icon)
-                            .font(.system(size: 24))
-                            .foregroundColor(isActive ? .white : .gray)
-                    }
-
-                    Text(text)
-                        .font(.caption)
-                        .foregroundColor(.primary)
+        Button(action: action) {
+            VStack {
+                ZStack {
+                    Circle()
+                        .fill(isActive ? Color.blue : Color(UIColor.secondarySystemBackground))
+                        .frame(width: 60, height: 60)
+                        .shadow(color: isActive ? Color.blue.opacity(0.4) : Color.black.opacity(0.1),
+                                radius: 5, x: 0, y: 3)
+                    
+                    Image(systemName: icon)
+                        .font(.system(size: 24))
+                        .foregroundColor(isActive ? .white : .gray)
                 }
+                
+                Text(text)
+                    .font(.caption)
+                    .foregroundColor(.primary)
             }
-            .buttonStyle(PlainButtonStyle())
         }
+        .buttonStyle(PlainButtonStyle())
+    }
     
+    // MARK: - Сохранение пароля на сервер
     func savePassword(service: String, email: String, username: String, password: String) {
-            // Отправка пароля на сервер для сохранения
-            guard let url = URL(string: "http://localhost:8000/save_password") else { return }
-            
-            var request = URLRequest(url: url)
-            request.httpMethod = "POST"
-            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-
-            let passwordData = PasswordData(password_name: "NewPassword", password_value: password, service: service, email: email, username: username)
-            
-            // Преобразуем структуру в словарь
-            let body: [String: Any] = [
-                "seed": authManager.seedPhrase,
-                "password_data": passwordData.toDictionary() // Используем преобразование в словарь
-            ]
-            
-            // Преобразуем словарь в JSON
-            do {
-                let jsonData = try JSONSerialization.data(withJSONObject: body, options: [])
-                request.httpBody = jsonData
-            } catch {
-                print("Ошибка сериализации JSON: \(error)")
-                return
-            }
-            
-            URLSession.shared.dataTask(with: request) { _, _, _ in
-                // Обработка результата сохранения
-            }.resume()
+        guard let url = URL(string: "http://localhost:8000/save_password") else { return }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let passwordData = PasswordData(
+            password_name: "NewPassword",
+            password_value: password,
+            service: service,
+            email: email,
+            username: username
+        )
+        
+        let body: [String: Any] = [
+            "seed": authManager.seedPhrase,
+            "password_data": passwordData.toDictionary()
+        ]
+        
+        do {
+            let jsonData = try JSONSerialization.data(withJSONObject: body, options: [])
+            request.httpBody = jsonData
+        } catch {
+            print("Ошибка сериализации JSON: \(error)")
+            return
         }
+        
+        URLSession.shared.dataTask(with: request) { _, _, _ in
+            // Обработка результата сохранения
+        }.resume()
+    }
     
-
+    // MARK: - Генерация пароля(ей)
     private func generatePasswords() {
-        guard let num = Int(numberOfPasswords), let length = Int(passwordLength) else { return }
-        generatedPasswords = (0..<num).map { _ in generatePassword(length: length) }
+        guard
+            let num = Int(numberOfPasswords),
+            let length = Int(passwordLength)
+        else { return }
+        
+        generatedPasswords = (0..<num).map { _ in
+            generatePassword(length: length)
+        }
         updatePasswordStrength()
     }
     
@@ -921,59 +1022,60 @@ struct PasswordGeneratorView: View {
         
         return String((0..<length).map { _ in characters.randomElement()! })
     }
-
+    
+    // MARK: - Обновление индикатора силы пароля
     private func updatePasswordStrength() {
         guard let length = Int(passwordLength) else {
             passwordStrengthPercentage = 0
             return
         }
-
-        // Если длина пароля менее 8 символов, устанавливаем 0% независимо от других параметров
+        
         if length < 8 {
             withAnimation(.spring()) {
                 passwordStrengthPercentage = 0
             }
             return
         }
-
-        // Дальнейший расчет для длины 8 и более символов
+        
         var strength = 0.0
-
+        
         // Длина пароля
         if length >= 12 {
             strength += 25
         } else if length >= 8 {
             strength += 15
         }
-
+        
         // Остальные параметры безопасности
         if useUppercase { strength += 25 }
         if useNumbers { strength += 25 }
         if useSpecialCharacters { strength += 25 }
-
-        // Ограничение силы пароля до 100%
+        
         withAnimation(.spring()) {
             passwordStrengthPercentage = min(strength, 100)
         }
     }
-
-
     
+    // MARK: - Копирование пароля в буфер обмена
     private func copyToClipboard(text: String) {
         UIPasteboard.general.string = text
         showCopiedAlert = true
     }
 }
 
-// Круговая диаграмма силы пароля
+// MARK: - Круговая диаграмма силы пароля
 struct CircleChartView: View {
     @Binding var percentage: Double
-
+    
     var body: some View {
         ZStack {
             Circle()
                 .trim(from: 0, to: CGFloat(percentage / 100))
-                .stroke(percentage < 40 ? Color.red : (percentage < 80 ? Color.yellow : Color.green), style: StrokeStyle(lineWidth: 24, lineCap: .round))
+                .stroke(
+                    percentage < 40 ? Color.red :
+                        (percentage < 80 ? Color.yellow : Color.green),
+                    style: StrokeStyle(lineWidth: 24, lineCap: .round)
+                )
                 .rotationEffect(.degrees(-90))
             
             Text("\(Int(percentage))%")
@@ -2619,3 +2721,4 @@ struct SavedPasswordsView_Previews: PreviewProvider {
         SavedPasswordsView()
     }
 }
+
