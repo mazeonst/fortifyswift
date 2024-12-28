@@ -13,6 +13,7 @@ import Foundation
 @main
 struct PasswordGeneratorApp: App {
     @StateObject var authManager = AuthManager()
+    @StateObject var folderManager = FolderManager()
 
     var body: some Scene {
         WindowGroup {
@@ -21,14 +22,17 @@ struct PasswordGeneratorApp: App {
                     ContentView()
                         .environmentObject(authManager)
                         .preferredColorScheme(.none) // Автоматическое переключение между светлой и темной темами
+                        .environmentObject(folderManager)
                 } else {
                     LockScreenView()
                         .environmentObject(authManager)
                         .preferredColorScheme(.none)
+                        .environmentObject(folderManager)
                 }
             } else {
                 WelcomeView()
                     .environmentObject(authManager)
+                    .environmentObject(folderManager)
                     .preferredColorScheme(.none)
             }
         }
@@ -1206,30 +1210,36 @@ struct CustomTextField: View {
 // MARK: - Отображение сохранённых паролей
 struct SavedPasswordsView: View {
     @EnvironmentObject var authManager: AuthManager
+    @EnvironmentObject var folderManager: FolderManager
+    
     @State private var savedPasswords: [PasswordData] = []
-    @State private var showAddPasswordView = false // Для отображения формы добавления пароля
-    @State private var searchText: String = "" // Состояние для текста поиска
-    @State private var isSearching: Bool = false // Для анимации поиска
-
+    @State private var showAddPasswordView = false
+    @State private var searchText: String = ""
+    @State private var isSearching: Bool = false
+    
+    /// Выбранная папка (nil = «Все»)
+    @State private var selectedFolderID: UUID? = nil
+    
     var body: some View {
         NavigationView {
-            ZStack { // Используем ZStack для наложения кнопки поверх контента
+            ZStack {
                 VStack {
-                                    // Заголовок
-                                    HStack(spacing: 8) {
-                                        Image(systemName: "folder.fill")
-                                            .foregroundColor(.blue)
-                                        Text("Сохраненные пароли")
-                                            .font(.system(size: 24, weight: .bold, design: .rounded))
-                                            .foregroundColor(.primary)
-                                    }
-                                    .padding(.top, 5)
-                    // Поле поиска с анимацией
+                    // Заголовок
+                    HStack(spacing: 8) {
+                        Image(systemName: "folder.fill")
+                            .foregroundColor(.blue)
+                        Text("Сохраненные пароли")
+                            .font(.system(size: 24, weight: .bold, design: .rounded))
+                            .foregroundColor(.primary)
+                    }
+                    .padding(.top, 5)
+                    
+                    // Поле поиска
                     HStack {
                         HStack {
                             Image(systemName: "magnifyingglass")
                                 .foregroundColor(.gray)
-
+                            
                             TextField("Поиск по сервису...", text: $searchText)
                                 .onTapGesture {
                                     withAnimation {
@@ -1243,13 +1253,13 @@ struct SavedPasswordsView: View {
                         .background(Color(.systemGray6))
                         .cornerRadius(10)
                         .padding(.horizontal)
-
+                        
                         if isSearching {
                             Button(action: {
                                 withAnimation {
                                     searchText = ""
                                     isSearching = false
-                                    hideKeyboard() // Скрываем клавиатуру
+                                    hideKeyboard()
                                 }
                             }) {
                                 Text("Отмена")
@@ -1260,23 +1270,80 @@ struct SavedPasswordsView: View {
                         }
                     }
                     .padding(.top, 8)
-
-                    // Проверяем, пуст ли список сохраненных паролей
+                    
+                    // Если есть папки, показываем горизонтальный список
+                    if !folderManager.folders.isEmpty {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 10) {
+                                // Кнопка "Все"
+                                Button(action: {
+                                    withAnimation {
+                                        selectedFolderID = nil
+                                    }
+                                }) {
+                                    Text("Все")
+                                        .fontWeight(selectedFolderID == nil ? .bold : .regular)
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 6)
+                                        .foregroundColor(
+                                            selectedFolderID == nil
+                                            ? .white
+                                            : .blue
+                                        )
+                                        .background(
+                                            selectedFolderID == nil
+                                            ? Color.blue // Цвет кнопки "Все" при выборе
+                                            : Color.gray.opacity(0.2)
+                                        )
+                                        .cornerRadius(12)
+                                }
+                                
+                                ForEach(folderManager.folders) { folder in
+                                    // Каждая папка полностью закрашивается цветом folder.colorHex,
+                                    // если она выбрана, иначе полупрозрачный фон
+                                    Button(action: {
+                                        withAnimation {
+                                            selectedFolderID = folder.id
+                                        }
+                                    }) {
+                                        Text(folder.name)
+                                            .fontWeight(
+                                                selectedFolderID == folder.id
+                                                ? .bold
+                                                : .regular
+                                            )
+                                            .padding(.horizontal, 12)
+                                            .padding(.vertical, 6)
+                                            .foregroundColor(
+                                                selectedFolderID == folder.id
+                                                ? .white // на выбранной делаем белый текст
+                                                : .blue  // на невыбранной — синий текст
+                                            )
+                                            .background(
+                                                selectedFolderID == folder.id
+                                                ? (Color(hex: folder.colorHex) ?? .gray)
+                                                : Color.gray.opacity(0.2)
+                                            )
+                                            .cornerRadius(12)
+                                    }
+                                }
+                            }
+                            .padding(.horizontal)
+                        }
+                        .padding(.top, 8)
+                    }
+                    
                     if savedPasswords.isEmpty {
                         VStack {
                             Spacer()
-
                             Image(systemName: "tray")
                                 .resizable()
                                 .scaledToFit()
-                                .frame(width: 100, height: 100) // Размер изображения
+                                .frame(width: 100, height: 100)
                                 .foregroundColor(.gray)
-                                .padding(.bottom, 0)
-
                             Text("Нет сохраненных паролей")
                                 .foregroundColor(.gray)
                                 .padding()
-
                             Spacer()
                         }
                     } else {
@@ -1285,16 +1352,16 @@ struct SavedPasswordsView: View {
                                 ForEach(filteredPasswords, id: \.password_name) { password in
                                     PasswordCardView(password: password, savedPasswords: $savedPasswords)
                                         .padding(.horizontal)
-                                        .transition(.opacity) // Анимация появления/исчезновения
-                                        .animation(.easeInOut(duration: 0.4), value: filteredPasswords) // Применяем анимацию при изменении списка
+                                        .transition(.opacity)
+                                        .animation(.easeInOut(duration: 0.4), value: filteredPasswords)
                                 }
                             }
                         }
-                        .padding(.top, 10)
+                        .padding(.top, 3)
                     }
                 }
-
-                // Кнопка добавления в правом нижнем углу
+                
+                // Кнопка добавления
                 VStack {
                     Spacer()
                     HStack {
@@ -1303,7 +1370,7 @@ struct SavedPasswordsView: View {
                             showAddPasswordView = true
                         }) {
                             Image(systemName: "plus.circle.fill")
-                                .font(.system(size: 34)) // Устанавливаем размер иконки
+                                .font(.system(size: 34))
                                 .foregroundColor(.green)
                                 .padding()
                         }
@@ -1311,95 +1378,105 @@ struct SavedPasswordsView: View {
                             AddPasswordView(isPresented: $showAddPasswordView, savePassword: savePassword)
                         }
                     }
-                    .padding([.trailing, .bottom], 10) // Добавляем отступы от края
+                    .padding([.trailing, .bottom], 10)
                 }
             }
             .onAppear(perform: loadPasswords)
         }
     }
     
+    /// Фильтруем пароли по поиску и по выбранной папке
     var filteredPasswords: [PasswordData] {
+        let resultBySearch: [PasswordData]
         if searchText.isEmpty {
-            return savedPasswords
+            resultBySearch = savedPasswords
         } else {
-            return savedPasswords.filter { $0.service.localizedCaseInsensitiveContains(searchText) }
+            resultBySearch = savedPasswords.filter {
+                $0.service.localizedCaseInsensitiveContains(searchText)
+            }
+        }
+        
+        guard let folderID = selectedFolderID else {
+            // Если не выбрана конкретная папка
+            return resultBySearch
+        }
+        
+        // Фильтруем только те пароли, что состоят в этой папке
+        return resultBySearch.filter { password in
+            folderManager.password(password.password_name, isInFolder: folderID)
         }
     }
-
-    // Функция для сохранения пользовательских паролей
-        func savePassword(service: String, email: String, username: String, password: String) {
-            guard let url = URL(string: "http://localhost:8000/save_password") else { return }
-
-            var request = URLRequest(url: url)
-            request.httpMethod = "POST"
-            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-
-            let passwordData = PasswordData(
-                password_name: "UserDefinedPassword",
-                password_value: password,
-                service: service,
-                email: email,
-                username: username
-            )
-
-            let body: [String: Any] = [
-                "seed": authManager.seedPhrase,
-                "password_data": passwordData.toDictionary()
-            ]
-
-            do {
-                let jsonData = try JSONSerialization.data(withJSONObject: body, options: [])
-                request.httpBody = jsonData
-            } catch {
-                print("Ошибка сериализации JSON: \(error)")
+    
+    // Сохранение нового пароля (пример)
+    func savePassword(service: String, email: String, username: String, password: String) {
+        guard let url = URL(string: "http://localhost:8000/save_password") else { return }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let passwordData = PasswordData(
+            password_name: "UserDefinedPassword",
+            password_value: password,
+            service: service,
+            email: email,
+            username: username
+        )
+        
+        let body: [String: Any] = [
+            "seed": authManager.seedPhrase,
+            "password_data": passwordData.toDictionary()
+        ]
+        
+        do {
+            let jsonData = try JSONSerialization.data(withJSONObject: body, options: [])
+            request.httpBody = jsonData
+        } catch {
+            print("Ошибка сериализации JSON: \(error)")
+            return
+        }
+        
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                print("Ошибка запроса: \(error)")
                 return
             }
-
-            // Отправляем запрос на сервер
-            URLSession.shared.dataTask(with: request) { data, response, error in
-                if let error = error {
-                    print("Ошибка запроса: \(error)")
-                    return
-                }
-
-                // Обновляем список паролей после сохранения
-                DispatchQueue.main.async {
-                    loadPasswords()
-                }
-            }.resume()
-        }
-
-        // Функция для загрузки паролей
-        func loadPasswords() {
-            guard let url = URL(string: "http://localhost:8000/get_passwords?seed=\(authManager.seedPhrase)") else { return }
-
-            URLSession.shared.dataTask(with: url) { data, response, error in
-                if let error = error {
-                    print("Ошибка загрузки паролей: \(error)")
-                    return
-                }
-
-                guard let data = data else {
-                    print("Нет данных")
-                    return
-                }
-
-                do {
-                    let decodedResponse = try JSONDecoder().decode(PasswordsResponse.self, from: data)
-                    DispatchQueue.main.async {
-                        self.savedPasswords = decodedResponse.passwords
-                    }
-                } catch {
-                    print("Ошибка декодирования данных: \(error)")
-                }
-            }.resume()
-        }
+            DispatchQueue.main.async {
+                loadPasswords()
+            }
+        }.resume()
+    }
     
-
+    // Загрузка паролей
+    func loadPasswords() {
+        guard let url = URL(string: "http://localhost:8000/get_passwords?seed=\(authManager.seedPhrase)") else { return }
+        
+        URLSession.shared.dataTask(with: url) { data, response, error in
+            if let error = error {
+                print("Ошибка загрузки паролей: \(error)")
+                return
+            }
+            guard let data = data else {
+                print("Нет данных")
+                return
+            }
+            do {
+                let decodedResponse = try JSONDecoder().decode(PasswordsResponse.self, from: data)
+                DispatchQueue.main.async {
+                    self.savedPasswords = decodedResponse.passwords
+                }
+            } catch {
+                print("Ошибка декодирования данных: \(error)")
+            }
+        }.resume()
+    }
+    
     func hideKeyboard() {
-        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),
+                                        to: nil, from: nil, for: nil)
     }
 }
+
 
 struct AddPasswordView: View {
     @Binding var isPresented: Bool
@@ -1507,7 +1584,7 @@ struct AddPasswordView: View {
     }
 }
 
-// MARK: - Карточка пароля
+// MARK: - PasswordCardView с контекстным меню
 struct PasswordCardView: View {
     let password: PasswordData
     @Binding var savedPasswords: [PasswordData]
@@ -1515,7 +1592,8 @@ struct PasswordCardView: View {
     @State private var isCopied: Bool = false
     @State private var showEditPasswordView = false
     @EnvironmentObject var authManager: AuthManager
-
+    @EnvironmentObject var folderManager: FolderManager
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
@@ -1523,6 +1601,7 @@ struct PasswordCardView: View {
                     .font(.headline)
                     .foregroundColor(Color(.label))
                 Spacer()
+                
                 Button(action: {
                     withAnimation {
                         isPasswordVisible.toggle()
@@ -1572,7 +1651,7 @@ struct PasswordCardView: View {
                     .font(.subheadline)
                     .foregroundColor(Color(.secondaryLabel))
             }
-
+            
             if isCopied {
                 Text("Скопировано!")
                     .font(.caption)
@@ -1581,7 +1660,7 @@ struct PasswordCardView: View {
             }
         }
         .padding()
-        .background(Color(UIColor.secondarySystemBackground)) // Динамический фон для карточки
+        .background(Color(UIColor.secondarySystemBackground))
         .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
         .sheet(isPresented: $showEditPasswordView) {
@@ -1589,19 +1668,38 @@ struct PasswordCardView: View {
                 isPresented: $showEditPasswordView,
                 password: password,
                 updatePassword: { name, service, email, username, newValue in
-                    updatePassword(passwordName: name, service: service, email: email, username: username, newPasswordValue: newValue)
+                    updatePassword(passwordName: name, service: service,
+                                   email: email, username: username,
+                                   newPasswordValue: newValue)
                 }
             )
         }
+        .contextMenu {
+            // Список папок: добавить/убрать
+            ForEach(folderManager.folders) { folder in
+                Button(action: {
+                    folderManager.togglePassword(password.password_name, folderID: folder.id)
+                }) {
+                    let isInFolder = folderManager.password(password.password_name, isInFolder: folder.id)
+                    Label(
+                        isInFolder
+                        ? "Убрать из «\(folder.name)»"
+                        : "Добавить в «\(folder.name)»",
+                        systemImage: isInFolder ? "minus.circle" : "plus.circle"
+                    )
+                }
+            }
+        }
     }
-
-    func updatePassword(passwordName: String, service: String, email: String, username: String, newPasswordValue: String) {
+    
+    func updatePassword(passwordName: String, service: String, email: String,
+                        username: String, newPasswordValue: String) {
         guard let url = URL(string: "http://localhost:8000/update_password") else { return }
-
+        
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-
+        
         let body: [String: Any] = [
             "seed": authManager.seedPhrase,
             "password_data": [
@@ -1612,7 +1710,7 @@ struct PasswordCardView: View {
                 "username": username
             ]
         ]
-
+        
         do {
             let jsonData = try JSONSerialization.data(withJSONObject: body, options: [])
             request.httpBody = jsonData
@@ -1620,33 +1718,30 @@ struct PasswordCardView: View {
             print("Ошибка сериализации JSON: \(error)")
             return
         }
-
+        
         URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
                 print("Ошибка при обновлении пароля: \(error)")
                 return
             }
-
             DispatchQueue.main.async {
                 loadPasswords()
             }
         }.resume()
     }
-
+    
     func loadPasswords() {
         guard let url = URL(string: "http://localhost:8000/get_passwords?seed=\(authManager.seedPhrase)") else { return }
-
+        
         URLSession.shared.dataTask(with: url) { data, response, error in
             if let error = error {
                 print("Ошибка загрузки паролей: \(error)")
                 return
             }
-
             guard let data = data else {
                 print("Нет данных")
                 return
             }
-
             do {
                 let decodedResponse = try JSONDecoder().decode(PasswordsResponse.self, from: data)
                 DispatchQueue.main.async {
@@ -1657,19 +1752,18 @@ struct PasswordCardView: View {
             }
         }.resume()
     }
-
+    
     func deletePassword() {
         guard let url = URL(string: "http://localhost:8000/delete_password") else { return }
-
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-
+        
         let body: [String: Any] = [
             "seed": authManager.seedPhrase,
             "password_name": password.password_name
         ]
-
+        
         do {
             let jsonData = try JSONSerialization.data(withJSONObject: body, options: [])
             request.httpBody = jsonData
@@ -1677,18 +1771,16 @@ struct PasswordCardView: View {
             print("Ошибка сериализации JSON: \(error)")
             return
         }
-
+        
         URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
                 print("Ошибка при удалении пароля: \(error)")
                 return
             }
-
             guard let data = data else {
                 print("Нет данных от сервера")
                 return
             }
-
             do {
                 let responseJSON = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any]
                 if let message = responseJSON?["message"] as? String {
@@ -1732,6 +1824,8 @@ struct PasswordData: Codable, Equatable {
 // MARK: - SettingsView
 struct SettingsView: View {
     @EnvironmentObject var authManager: AuthManager
+    @EnvironmentObject var folderManager: FolderManager
+    
     @State private var isSeedPhraseVisible: Bool = false
     @State private var showingMailView = false
     @State private var mailResult: Result<MFMailComposeResult, Error>? = nil
@@ -1742,13 +1836,14 @@ struct SettingsView: View {
     @State private var isBiometricsEnabled = false
     @State private var hasCheckedPasswordOnce = false
     @State private var showAlertView = false
-    @State private var isBannerVisible = false // Для управления видимостью баннера
-
+    @State private var isBannerVisible = false
+    /// Новое состояние для показа экрана управления папками
+    @State private var showingManageFoldersView = false
+    
     var body: some View {
         NavigationView {
             ZStack {
                 VStack {
-                    // Заголовок настроек
                     HStack(spacing: 8) {
                         Image(systemName: "gearshape.fill")
                             .foregroundColor(.blue)
@@ -1757,17 +1852,16 @@ struct SettingsView: View {
                             .foregroundColor(.primary)
                     }
                     .padding(.top, 5)
-
+                    
                     ScrollView {
                         VStack(spacing: 20) {
-                            // Баннер располагается под заголовком, но перед кнопками
                             if isBannerVisible {
                                 BannerView(isVisible: $isBannerVisible)
                                     .transition(.move(edge: .top).combined(with: .opacity))
                                     .animation(.easeInOut)
                             }
-
-                            // Кнопка для открытия экрана "Безопасность"
+                            
+                            // Кнопка "Безопасность"
                             Button(action: {
                                 showingSecurityView = true
                             }) {
@@ -1789,8 +1883,8 @@ struct SettingsView: View {
                                 SecuritySettingsView()
                                     .environmentObject(authManager)
                             }
-
-                            // Кнопка для экспорта паролей
+                            
+                            // Кнопка "Экспортировать пароли"
                             Button(action: exportPasswords) {
                                 HStack {
                                     Image(systemName: "square.and.arrow.down")
@@ -1804,7 +1898,30 @@ struct SettingsView: View {
                                 .cornerRadius(10)
                                 .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
                             }
-
+                            
+                            // Новая кнопка «Управление папками»
+                            Button(action: {
+                                showingManageFoldersView = true
+                            }) {
+                                HStack {
+                                    Image(systemName: "folder.badge.plus")
+                                        .foregroundColor(.blue)
+                                    Text("Управление папками")
+                                        .fontWeight(.bold)
+                                    Spacer()
+                                    Image(systemName: "chevron.right")
+                                        .foregroundColor(.gray)
+                                }
+                                .padding()
+                                .background(Color(UIColor.secondarySystemBackground))
+                                .cornerRadius(10)
+                                .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                            }
+                            .sheet(isPresented: $showingManageFoldersView) {
+                                ManageFoldersView()
+                                    .environmentObject(folderManager)
+                            }
+                            
                             // Кнопка "Contact"
                             Section {
                                 Button(action: {
@@ -1832,7 +1949,7 @@ struct SettingsView: View {
                             hasCheckedPasswordOnce = true
                         }
                     }
-
+                    
                     // Кнопка "Выйти из аккаунта"
                     Button(action: {
                         showAlertView = true
@@ -1856,8 +1973,7 @@ struct SettingsView: View {
                 .sheet(isPresented: $showingMailView) {
                     MailView(result: self.$mailResult)
                 }
-
-                // Всплывающее окно
+                
                 if showAlertView {
                     SaveSeedAlertView(isVisible: $showAlertView, onConfirm: {
                         authManager.logout()
@@ -1866,12 +1982,11 @@ struct SettingsView: View {
             }
         }
     }
-
+    
     private func exportPasswords() {
         authManager.exportPasswords { passwords in
             guard let passwords = passwords else { return }
             
-            // Форматируем текущую дату и время для имени файла
             let dateFormatter = DateFormatter()
             dateFormatter.dateFormat = "yyyy-MM-dd_HH-mm-ss"
             let dateString = dateFormatter.string(from: Date())
@@ -1885,7 +2000,8 @@ struct SettingsView: View {
                 DispatchQueue.main.async {
                     if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
                        let rootVC = windowScene.windows.first?.rootViewController {
-                        let activityVC = UIActivityViewController(activityItems: [fileURL], applicationActivities: nil)
+                        let activityVC = UIActivityViewController(activityItems: [fileURL],
+                                                                  applicationActivities: nil)
                         activityVC.completionWithItemsHandler = { _, completed, _, _ in
                             if completed {
                                 print("Экспорт завершен успешно")
@@ -1900,6 +2016,7 @@ struct SettingsView: View {
         }
     }
 }
+
 
 struct BannerView: View {
     @Binding var isVisible: Bool
@@ -2703,6 +2820,343 @@ struct FaceIDButton: View {
     }
 }
 
+// MARK: - Folder Model и менеджер папок (локальное хранение)
+struct Folder: Identifiable, Codable, Equatable {
+    let id: UUID
+    var name: String
+    /// Храним цвет в hex, чтобы сохранять в UserDefaults
+    var colorHex: String
+}
+
+/// Класс, управляющий папками и привязками паролей к папкам
+class FolderManager: ObservableObject {
+    static let shared = FolderManager()
+
+    @Published var folders: [Folder] = []
+    @Published var passwordFolderMap: [String: [UUID]] = [:]
+
+    private let foldersKey = "foldersKey"
+    private let folderMapKey = "folderMapKey"
+
+    init() {
+        loadFolders()
+        loadFolderMap()
+    }
+    
+    // Создание папки
+    func createFolder(name: String, colorHex: String) {
+        let newFolder = Folder(id: UUID(), name: name, colorHex: colorHex)
+        folders.append(newFolder)
+        saveFolders()
+    }
+    
+    // Удаление папки
+    func deleteFolder(_ folder: Folder) {
+        folders.removeAll { $0.id == folder.id }
+        // Убираем упоминания в passwordFolderMap
+        for (key, folderIDs) in passwordFolderMap {
+            passwordFolderMap[key] = folderIDs.filter { $0 != folder.id }
+        }
+        saveFolders()
+        saveFolderMap()
+    }
+    
+    // Редактирование папки
+    func updateFolder(_ folder: Folder, newName: String, newColorHex: String) {
+        guard let index = folders.firstIndex(where: { $0.id == folder.id }) else { return }
+        folders[index].name = newName
+        folders[index].colorHex = newColorHex
+        saveFolders()
+    }
+
+    // Сохранение/загрузка
+    private func saveFolders() {
+        do {
+            let data = try JSONEncoder().encode(folders)
+            UserDefaults.standard.set(data, forKey: foldersKey)
+        } catch {
+            print("Ошибка при сохранении папок: \(error)")
+        }
+    }
+
+    private func loadFolders() {
+        guard let data = UserDefaults.standard.data(forKey: foldersKey) else { return }
+        do {
+            let decoded = try JSONDecoder().decode([Folder].self, from: data)
+            folders = decoded
+        } catch {
+            print("Ошибка при загрузке папок: \(error)")
+        }
+    }
+
+    private func saveFolderMap() {
+        do {
+            let data = try JSONEncoder().encode(passwordFolderMap)
+            UserDefaults.standard.set(data, forKey: folderMapKey)
+        } catch {
+            print("Ошибка при сохранении passwordFolderMap: \(error)")
+        }
+    }
+
+    private func loadFolderMap() {
+        guard let data = UserDefaults.standard.data(forKey: folderMapKey) else { return }
+        do {
+            let decoded = try JSONDecoder().decode([String: [UUID]].self, from: data)
+            passwordFolderMap = decoded
+        } catch {
+            print("Ошибка при загрузке passwordFolderMap: \(error)")
+        }
+    }
+
+    // Добавление/удаление пароля в папку
+    func togglePassword(_ passwordName: String, folderID: UUID) {
+        var folderIDs = passwordFolderMap[passwordName] ?? []
+        if folderIDs.contains(folderID) {
+            folderIDs.removeAll { $0 == folderID }
+        } else {
+            folderIDs.append(folderID)
+        }
+        passwordFolderMap[passwordName] = folderIDs
+        saveFolderMap()
+    }
+    
+    // Проверка, есть ли пароль в папке
+    func password(_ passwordName: String, isInFolder folderID: UUID) -> Bool {
+        guard let folderIDs = passwordFolderMap[passwordName] else { return false }
+        return folderIDs.contains(folderID)
+    }
+}
+
+// MARK: - Утилита для перевода hex -> SwiftUI Color
+extension Color {
+    init?(hex: String) {
+        let r, g, b: CGFloat
+        var hexColor = hex
+        if hexColor.hasPrefix("#") {
+            hexColor.removeFirst()
+        }
+        
+        guard hexColor.count == 6,
+              let intCode = Int(hexColor, radix: 16) else {
+            return nil
+        }
+        r = CGFloat((intCode >> 16) & 0xFF) / 255
+        g = CGFloat((intCode >> 8) & 0xFF) / 255
+        b = CGFloat(intCode & 0xFF) / 255
+        
+        self.init(red: r, green: g, blue: b)
+    }
+    
+    /// Вернёт hex-строку без префикса `#`
+    func toHex() -> String {
+        let uiColor = UIColor(self)
+        guard let components = uiColor.cgColor.components, components.count >= 3 else {
+            return "FFFFFF"
+        }
+        let r = components[0]
+        let g = components[1]
+        let b = components[2]
+        
+        let rgb: Int =
+          (Int)(r*255)<<16 |
+          (Int)(g*255)<<8 |
+          (Int)(b*255)<<0
+        
+        return String(format: "%06x", rgb)
+    }
+}
+
+// MARK: - Экран управления папками
+struct ManageFoldersView: View {
+    @EnvironmentObject var folderManager: FolderManager
+    @Environment(\.presentationMode) var presentationMode
+
+    /// Флаг для показа окна «Создать папку»
+    @State private var showCreateFolderSheet = false
+
+    /// Папка, которую редактируем (nil — если не редактируем)
+    @State private var folderToEdit: Folder? = nil
+
+    var body: some View {
+        NavigationView {
+            VStack {
+                if folderManager.folders.isEmpty {
+                    Text("Папок ещё нет.\nНажмите «+» чтобы создать.")
+                        .font(.headline)
+                        .foregroundColor(.gray)
+                        .multilineTextAlignment(.center)
+                        .padding()
+                } else {
+                    List {
+                        ForEach(folderManager.folders) { folder in
+                            // 1) Можно использовать ZStack, чтобы наложить
+                            // скруглённый фон + тень позади содержимого.
+                            ZStack(alignment: .leading) {
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(Color(hex: folder.colorHex) ?? .gray)
+                                    .shadow(color: .black.opacity(0.15), radius: 5, x: 0, y: 2)
+
+                                // 2) Вложенный HStack для контента.
+                                HStack {
+                                    Text(folder.name)
+                                        .font(.system(size: 17, weight: .bold))
+                                        .foregroundColor(.white)
+                                    Spacer()
+
+                                    // Кнопка «Редактировать»
+                                    Button(action: {
+                                        folderToEdit = folder
+                                    }) {
+                                        Image(systemName: "pencil")
+                                            .foregroundColor(.white)
+                                    }
+                                    .buttonStyle(PlainButtonStyle())
+                                    .padding(.trailing, 8)
+
+                                    // Кнопка «Удалить»
+                                    Button(action: {
+                                        folderManager.deleteFolder(folder)
+                                    }) {
+                                        Image(systemName: "trash")
+                                            .foregroundColor(.white)
+                                    }
+                                    .buttonStyle(PlainButtonStyle())
+                                }
+                                .padding() // Отступы внутри карточки
+                            }
+                            // 3) Убираем стандартный фон и разделители,
+                            // чтобы видеть нашу «карточку».
+                            .listRowBackground(Color.clear)
+                            .listRowSeparator(.hidden)
+                            .padding(.vertical, 4) // Чтобы карточки не слипались
+                        }
+                    }
+                    .listStyle(PlainListStyle())
+                }
+            }
+            .navigationBarTitle("Управление папками", displayMode: .inline)
+            .navigationBarItems(
+                leading: Button("Закрыть") {
+                    presentationMode.wrappedValue.dismiss()
+                },
+                trailing: Button(action: {
+                    // Создать новую папку
+                    showCreateFolderSheet = true
+                }) {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.system(size: 22))
+                }
+            )
+        }
+        // Sheet для СОЗДАНИЯ папки
+        .sheet(isPresented: $showCreateFolderSheet) {
+            CreateOrEditFolderView(
+                folderToEdit: nil,
+                onDismiss: {
+                    showCreateFolderSheet = false
+                }
+            )
+            .environmentObject(folderManager)
+        }
+        // Sheet для РЕДАКТИРОВАНИЯ папки
+        .sheet(item: $folderToEdit) { folder in
+            CreateOrEditFolderView(
+                folderToEdit: folder,
+                onDismiss: {
+                    folderToEdit = nil
+                }
+            )
+            .environmentObject(folderManager)
+        }
+    }
+}
+
+// MARK: - Экран создания/редактирования папки
+struct CreateOrEditFolderView: View {
+    @EnvironmentObject var folderManager: FolderManager
+
+    /// nil = создаём, не nil = редактируем
+    let folderToEdit: Folder?
+
+    /// Колбэк, вызываемый при закрытии
+    let onDismiss: () -> Void
+
+    @State private var folderName: String = ""
+    @State private var selectedColorHex: String = "#ffffff"
+
+    let pastelHexColors: [String] = [
+        "#ffffff", "#ffd5cd", "#ffe8cc", "#fff5c6", "#d4f6cc",
+        "#cffaf8", "#dce8fe", "#f8dcfe", "#ffd7f3", "#e9d7ff",
+        "#f2d7d9", "#f3e8cb", "#eaf3d2", "#cce9e4", "#d6dff2", "#f3dae8", "#ffd5e5"
+    ]
+
+    var body: some View {
+        NavigationView {
+            VStack {
+                Text(folderToEdit == nil ? "Создать папку" : "Редактировать папку")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .padding(.top, 20)
+
+                // Название папки
+                TextField("Название папки", text: $folderName)
+                    .padding()
+                    .background(Color(UIColor.secondarySystemBackground))
+                    .cornerRadius(8)
+                    .padding(.horizontal)
+                    .padding(.top, 10)
+
+                Text("Выберите цвет:")
+                    .fontWeight(.semibold)
+                    .padding(.top, 15)
+
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack {
+                        ForEach(pastelHexColors, id: \.self) { colorHex in
+                            ZStack {
+                                Circle()
+                                    .fill(Color(hex: colorHex) ?? .gray)
+                                    .frame(width: 40, height: 40)
+                                    .padding(4)
+                                    .overlay(
+                                        Circle()
+                                            .stroke(selectedColorHex == colorHex ? Color.blue : .clear, lineWidth: 2)
+                                    )
+                            }
+                            .onTapGesture {
+                                selectedColorHex = colorHex
+                            }
+                        }
+                    }
+                }
+                .padding()
+
+                Spacer()
+            }
+            .onAppear {
+                if let folder = folderToEdit {
+                    folderName = folder.name
+                    selectedColorHex = folder.colorHex
+                }
+            }
+            .navigationBarItems(
+                leading: Button("Отмена") {
+                    onDismiss()  // Закрываем sheet
+                },
+                trailing: Button(folderToEdit == nil ? "Создать" : "Сохранить") {
+                    guard !folderName.isEmpty else { return }
+                    if let folder = folderToEdit {
+                        folderManager.updateFolder(folder, newName: folderName, newColorHex: selectedColorHex)
+                    } else {
+                        folderManager.createFolder(name: folderName, colorHex: selectedColorHex)
+                    }
+                    onDismiss()  // Закрываем sheet
+                }
+            )
+        }
+    }
+}
+
 // MARK: - Previews
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
@@ -2721,4 +3175,3 @@ struct SavedPasswordsView_Previews: PreviewProvider {
         SavedPasswordsView()
     }
 }
-
