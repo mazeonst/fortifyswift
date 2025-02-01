@@ -201,12 +201,12 @@ struct WelcomeView: View {
             // Название приложения
             Text("Fortify")
                 .font(.system(size: 44, weight: .heavy, design: .rounded))
-                .foregroundColor(.blue)
+                .foregroundColor(.cyan)
             
             // Короткая фраза о том, что Fortify — безопасное хранилище паролей
-            Text("Создавайте и надёжно, безопасно храните свои пароли")
+            Text("Создавайте и безопасно храните свои пароли")
                 .font(.system(size: 18, weight: .bold))
-                .foregroundColor(.black)
+                .foregroundColor(.white)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 16)
             
@@ -218,12 +218,12 @@ struct WelcomeView: View {
                     // Иконка "плюс" (пример)
                     Image(systemName: "plus.circle.fill")
                         .font(.system(size: 24))
-                        .foregroundColor(.blue)
+                        .foregroundColor(.cyan)
                     
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Создать новое хранилище")
                             .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(.black)
+                            .foregroundColor(.white)
                         
                         Text("Сгенерировать Seed-фразу")
                             .font(.system(size: 14))
@@ -233,7 +233,7 @@ struct WelcomeView: View {
                     Spacer()
                 }
                 .padding()
-                .background(Color.gray.opacity(0.1))
+                .background(Color.black.opacity(0.7))
                 .cornerRadius(12)
             }
             .padding(.horizontal, 16)
@@ -246,12 +246,12 @@ struct WelcomeView: View {
                     // Иконка "стрелка вниз" (пример)
                     Image(systemName: "arrow.down.circle.fill")
                         .font(.system(size: 24))
-                        .foregroundColor(.blue)
+                        .foregroundColor(.cyan)
                     
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Подключить хранилище")
                             .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(.black)
+                            .foregroundColor(.white)
                         
                         Text("Импорт, восстановление или просмотр")
                             .font(.system(size: 14))
@@ -261,7 +261,7 @@ struct WelcomeView: View {
                     Spacer()
                 }
                 .padding()
-                .background(Color.gray.opacity(0.1))
+                .background(Color.black.opacity(0.7))
                 .cornerRadius(12)
             }
             .padding(.horizontal, 16)
@@ -271,7 +271,7 @@ struct WelcomeView: View {
         .padding(.bottom, 40)
         .background(
             LinearGradient(
-                gradient: Gradient(colors: [Color.white, Color.blue.opacity(0.05)]),
+                gradient: Gradient(colors: [Color.black, Color.cyan.opacity(0.2)]),
                 startPoint: .top,
                 endPoint: .bottom
             )
@@ -317,115 +317,133 @@ struct SeedPhraseView: View {
     @State private var isCopied: Bool = false
 
     var body: some View {
-        VStack(spacing: 30) {
-            // Заголовок
-            Text("Ваша сид-фраза")
-                .font(.largeTitle)
-                .fontWeight(.bold)
-                .padding(.top, 20)
-                .foregroundColor(.blue)
-                .shadow(color: .blue.opacity(0.3), radius: 10, x: 0, y: 5)
-            
-            // Сид-фраза по словам с нумерацией
-            VStack(spacing: 15) {
-                LazyVGrid(
-                    columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 3),
-                    spacing: 15
-                ) {
-                    ForEach(seedPhrase.split(separator: " ").enumerated().map { $0 }, id: \.offset) { index, word in
-                        VStack(spacing: 5) {
-                            // Номер слова
-                            Text("\(index + 1).")
-                                .font(.caption)
-                                .foregroundColor(.gray)
-                            
-                            // Слово в блоке
-                            ZStack {
-                                Rectangle()
-                                    .fill(Color.gray.opacity(0.2))
-                                    .frame(width: 100, height: 50) // Фиксированный размер блока
-                                    .cornerRadius(8)
-                                    .shadow(color: .blue.opacity(0.3), radius: 5, x: 0, y: 3)
-                                
-                                if isSeedVisible {
-                                    Text(word)
-                                        .font(.system(.body, design: .monospaced))
-                                        .foregroundColor(.primary)
-                                } else {
-                                    Text("****")
-                                        .font(.system(.body, design: .monospaced))
-                                        .foregroundColor(.gray)
+        ZStack {
+            // Градиентный фон
+            LinearGradient(
+                gradient: Gradient(colors: [Color.black, Color.cyan.opacity(0.2)]),
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .edgesIgnoringSafeArea(.all)
+
+            VStack(spacing: 30) {
+                // Заголовок
+                Text("Ваша сид-фраза")
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+                    .foregroundColor(.white)
+                    .shadow(color: .cyan.opacity(0.5), radius: 10, x: 0, y: 5)
+                    .padding(.top, 20)
+
+                // Сид-фраза по словам с нумерацией
+                VStack(spacing: 15) {
+                    LazyVGrid(
+                        columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 3),
+                        spacing: 15
+                    ) {
+                        ForEach(seedPhrase.split(separator: " ").enumerated().map { $0 }, id: \.offset) { index, word in
+                            VStack(spacing: 5) {
+                                // Номер слова
+                                Text("\(index + 1).")
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
+
+                                // Слово в блоке
+                                ZStack {
+                                    // Сделаем фон светлее и добавим обводку
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .fill(Color.gray.opacity(0.2))
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 8)
+                                                .stroke(Color.white.opacity(0.6), lineWidth: 1)
+                                        )
+                                        .frame(width: 100, height: 50)
+
+                                    if isSeedVisible {
+                                        Text(word)
+                                            .font(.system(.body, design: .monospaced))
+                                            .foregroundColor(.white)
+                                    } else {
+                                        Text("****")
+                                            .font(.system(.body, design: .monospaced))
+                                            .foregroundColor(.gray)
+                                    }
                                 }
                             }
                         }
                     }
-                }
-                .padding()
-                .background(Color.gray.opacity(0.1))
-                .cornerRadius(12)
-                .shadow(color: .blue.opacity(0.3), radius: 10, x: 0, y: 5)
-
-                // Кнопка "Глазик" для показа/скрытия
-                HStack {
-                    Button(action: {
-                        withAnimation {
-                            isSeedVisible.toggle()
-                        }
-                    }) {
-                        Image(systemName: isSeedVisible ? "eye.slash.fill" : "eye.fill")
-                            .foregroundColor(.blue)
-                            .font(.system(size: 20))
-                            .scaleEffect(isSeedVisible ? 1.2 : 1.0)
-                    }
-                    
-                    Spacer()
-                    
-                    // Кнопка "Копировать"
-                    Button(action: {
-                        UIPasteboard.general.string = seedPhrase
-                        withAnimation {
-                            isCopied = true
-                        }
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                            withAnimation {
-                                isCopied = false
-                            }
-                        }
-                    }) {
-                        Image(systemName: "doc.on.doc")
-                            .foregroundColor(.blue)
-                            .font(.system(size: 20))
-                            .scaleEffect(isCopied ? 1.2 : 1.0)
-                    }
-                }
-            }
-
-            // Анимация "Сохраните свою сид-фразу"
-            Spacer()
-            SaveSeedPhraseAnimationView() // Анимация
-
-            // Кнопка "Продолжить"
-            Button(action: {
-                authManager.login(with: seedPhrase)
-                presentationMode.wrappedValue.dismiss()
-            }) {
-                Text("Продолжить")
-                    .fontWeight(.bold)
                     .padding()
-                    .frame(maxWidth: .infinity)
-                    .background(Color.green.opacity(0.2))
-                    .foregroundColor(.green)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.black.opacity(0.4))
+                    )
+
+                    // Кнопки "Глазик" / "Копировать"
+                    HStack {
+                        Button(action: {
+                            withAnimation {
+                                isSeedVisible.toggle()
+                            }
+                        }) {
+                            Image(systemName: isSeedVisible ? "eye.slash.fill" : "eye.fill")
+                                .foregroundColor(.cyan)
+                                .font(.system(size: 20))
+                                .scaleEffect(isSeedVisible ? 1.2 : 1.0)
+                        }
+
+                        Spacer()
+
+                        Button(action: {
+                            UIPasteboard.general.string = seedPhrase
+                            withAnimation {
+                                isCopied = true
+                            }
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                withAnimation {
+                                    isCopied = false
+                                }
+                            }
+                        }) {
+                            Image(systemName: "doc.on.doc")
+                                .foregroundColor(.cyan)
+                                .font(.system(size: 20))
+                                .scaleEffect(isCopied ? 1.2 : 1.0)
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                }
+                
+                Spacer()
+
+                // Анимация "Сохраните свою сид-фразу"
+                SaveSeedPhraseAnimationView()
+
+                // Кнопка "Продолжить"
+                Button(action: {
+                    authManager.login(with: seedPhrase)
+                    presentationMode.wrappedValue.dismiss()
+                }) {
+                    HStack(spacing: 16) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 24))
+                            .foregroundColor(.cyan)
+                        
+                        Text("Продолжить")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(.white)
+                    }
+                    .padding()
+                    .background(Color.black.opacity(0.7))
                     .cornerRadius(12)
-                    .shadow(color: .green.opacity(0.5), radius: 10, x: 0, y: 5)
+                }
+                .padding(.horizontal, 20)
             }
-            .padding(.horizontal, 20)
+            .padding()
         }
-        .padding()
-        .background(Color(UIColor.systemGroupedBackground).edgesIgnoringSafeArea(.all))
     }
 }
 
-// Анимация "Сохраните свою сид-фразу"
+
 struct SaveSeedPhraseAnimationView: View {
     @State private var isAnimating = false
 
@@ -435,19 +453,20 @@ struct SaveSeedPhraseAnimationView: View {
                 Image(systemName: "lock.fill")
                     .resizable()
                     .frame(width: 40, height: 50)
-                    .foregroundColor(.blue)
+                    .foregroundColor(.cyan)
                     .scaleEffect(isAnimating ? 1.1 : 1.0)
-                    .animation(Animation.easeInOut(duration: 1).repeatForever(autoreverses: true), value: isAnimating)
-                
+                    .animation(Animation.easeInOut(duration: 1).repeatForever(autoreverses: true),
+                               value: isAnimating)
+
                 Text("Сохраните вашу seed-фразу в безопасном месте!")
                     .font(.headline)
                     .foregroundColor(.white)
                     .padding(.leading, 10)
             }
             .padding()
-            .background(Color.blue.opacity(0.8))
+            .background(Color.black.opacity(0.7))
             .cornerRadius(15)
-            .shadow(color: .blue.opacity(0.5), radius: 10, x: 0, y: 5)
+            .shadow(color: .cyan.opacity(0.5), radius: 10, x: 0, y: 5)
             .onAppear {
                 isAnimating = true
             }
@@ -457,8 +476,9 @@ struct SaveSeedPhraseAnimationView: View {
     }
 }
 
+
 struct LoginView: View {
-    @State private var seedPhrase: [String] = Array(repeating: "", count: 12) // Массив для ввода сид-фразы
+    @State private var seedPhrase: [String] = Array(repeating: "", count: 12)
     @Environment(\.presentationMode) var presentationMode
     @EnvironmentObject var authManager: AuthManager
     @State private var isSeedVisible: Bool = false
@@ -466,124 +486,142 @@ struct LoginView: View {
     @State private var showLoading: Bool = false
 
     var body: some View {
-        VStack(spacing: 30) {
-            // Заголовок
-            Text("Введите сид-фразу")
-                .font(.largeTitle)
-                .fontWeight(.bold)
-                .padding(.top, 20)
-                .foregroundColor(.blue)
-                .shadow(color: .blue.opacity(0.3), radius: 10, x: 0, y: 5)
+        ZStack {
+            // Градиентный фон, как в WelcomeView
+            LinearGradient(
+                gradient: Gradient(colors: [Color.black, Color.cyan.opacity(0.2)]),
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .edgesIgnoringSafeArea(.all)
 
-            // Сид-фраза по словам с вводом
-            VStack(spacing: 15) {
-                LazyVGrid(
-                    columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 3),
-                    spacing: 15
-                ) {
-                    ForEach(0..<seedPhrase.count, id: \.self) { index in
-                        VStack(spacing: 5) {
-                            // Номер слова
-                            Text("\(index + 1).")
-                                .font(.caption)
-                                .foregroundColor(.gray)
+            VStack(spacing: 30) {
+                // Заголовок
+                Text("Введите сид-фразу")
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+                    .foregroundColor(.white)
+                    .shadow(color: .cyan.opacity(0.5), radius: 10, x: 0, y: 5)
+                    .padding(.top, 20)
 
-                            // Поле для ввода слова
-                            ZStack {
-                                Rectangle()
-                                    .fill(Color.gray.opacity(0.2))
-                                    .frame(width: 100, height: 50)
-                                    .cornerRadius(8)
-                                    .shadow(color: .blue.opacity(0.3), radius: 5, x: 0, y: 3)
+                // Сид-фраза по словам с вводом
+                VStack(spacing: 15) {
+                    LazyVGrid(
+                        columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 3),
+                        spacing: 15
+                    ) {
+                        ForEach(0..<seedPhrase.count, id: \.self) { index in
+                            VStack(spacing: 5) {
+                                // Номер слова
+                                Text("\(index + 1).")
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
 
-                                if isSeedVisible {
-                                    TextField("", text: $seedPhrase[index])
-                                        .font(.system(.body, design: .monospaced))
-                                        .foregroundColor(.primary)
-                                        .multilineTextAlignment(.center)
-                                } else {
-                                    SecureField("", text: $seedPhrase[index])
-                                        .font(.system(.body, design: .monospaced))
-                                        .foregroundColor(.primary)
-                                        .multilineTextAlignment(.center)
+                                // Поле для ввода слова
+                                ZStack {
+                                    // Немного более светлый фон + обводка
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .fill(Color.gray.opacity(0.2))
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 8)
+                                                .stroke(Color.white.opacity(0.6), lineWidth: 1)
+                                        )
+                                        .frame(width: 100, height: 50)
+
+                                    if isSeedVisible {
+                                        TextField("", text: $seedPhrase[index])
+                                            .font(.system(.body, design: .monospaced))
+                                            .foregroundColor(.white)
+                                            .multilineTextAlignment(.center)
+                                    } else {
+                                        SecureField("", text: $seedPhrase[index])
+                                            .font(.system(.body, design: .monospaced))
+                                            .foregroundColor(.white)
+                                            .multilineTextAlignment(.center)
+                                    }
                                 }
                             }
                         }
                     }
-                }
-                .padding()
-                .background(Color.gray.opacity(0.1))
-                .cornerRadius(12)
-                .shadow(color: .blue.opacity(0.3), radius: 10, x: 0, y: 5)
-
-                // Кнопки управления
-                HStack {
-                    // Кнопка "Глазик"
-                    Button(action: {
-                        withAnimation {
-                            isSeedVisible.toggle()
-                        }
-                    }) {
-                        Image(systemName: isSeedVisible ? "eye.slash.fill" : "eye.fill")
-                            .foregroundColor(.blue)
-                            .font(.system(size: 20))
-                    }
-
-                    Spacer()
-
-                    // Кнопка "Вставить" для вставки из буфера обмена
-                    Button(action: {
-                        if let clipboardText = UIPasteboard.general.string {
-                            let words = clipboardText.split(separator: " ").map(String.init)
-                            if words.count == seedPhrase.count {
-                                seedPhrase = words
-                            }
-                        }
-                    }) {
-                        Image(systemName: "doc.on.clipboard")
-                            .foregroundColor(.blue)
-                            .font(.system(size: 20))
-                    }
-                }
-                .padding(.horizontal, 20)
-            }
-
-            Spacer()
-
-            if showLoading {
-                ProgressView()
                     .padding()
-            } else {
-                Button(action: {
-                    loginUser()
-                }) {
-                    Text("Войти")
-                        .fontWeight(.bold)
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(Color.green.opacity(0.2))
-                        .foregroundColor(.green)
-                        .cornerRadius(12)
-                        .shadow(color: .green.opacity(0.5), radius: 10, x: 0, y: 5)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.black.opacity(0.4))
+                    )
+
+                    // Кнопки управления
+                    HStack {
+                        // Кнопка "Глазик"
+                        Button(action: {
+                            withAnimation {
+                                isSeedVisible.toggle()
+                            }
+                        }) {
+                            Image(systemName: isSeedVisible ? "eye.slash.fill" : "eye.fill")
+                                .foregroundColor(.cyan)
+                                .font(.system(size: 20))
+                        }
+
+                        Spacer()
+
+                        // Кнопка "Вставить" для вставки из буфера обмена
+                        Button(action: {
+                            if let clipboardText = UIPasteboard.general.string {
+                                let words = clipboardText.split(separator: " ").map(String.init)
+                                if words.count == seedPhrase.count {
+                                    seedPhrase = words
+                                }
+                            }
+                        }) {
+                            Image(systemName: "doc.on.clipboard")
+                                .foregroundColor(.cyan)
+                                .font(.system(size: 20))
+                        }
+                    }
+                    .padding(.horizontal, 20)
                 }
-                .padding(.horizontal, 20)
-                .padding(.bottom, 30)
-            }
 
-            // Ошибка при неверной сид-фразе
-            if loginError {
-                Text("Неверная сид-фраза. Попробуйте снова.")
-                    .font(.caption)
-                    .foregroundColor(.red)
-                    .padding(.top, 10)
-                    .transition(.opacity)
+                Spacer()
+
+                // Кнопка "Войти" или загрузка
+                if showLoading {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        .padding()
+                } else {
+                    Button(action: {
+                        showLoading = true
+                        loginUser()
+                    }) {
+                        HStack(spacing: 16) {
+                            Image(systemName: "arrow.right.circle.fill")
+                                .font(.system(size: 24))
+                                .foregroundColor(.cyan)
+                            
+                            Text("Войти")
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundColor(.white)
+                        }
+                        .padding()
+                        .background(Color.black.opacity(0.7))
+                        .cornerRadius(12)
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 30)
+                }
+
+                // Ошибка при неверной сид-фразе
+                if loginError {
+                    Text("Неверная сид-фраза. Попробуйте снова.")
+                        .font(.caption)
+                        .foregroundColor(.red)
+                        .padding(.top, 10)
+                        .transition(.opacity)
+                }
             }
+            .padding()
         }
-        .padding()
-        .background(Color(UIColor.systemGroupedBackground).edgesIgnoringSafeArea(.all))
     }
-    
-
 
     func loginUser() {
             guard let url = URL(string: "http://localhost:8000/login") else {
@@ -642,6 +680,7 @@ struct LoginView: View {
         }
     }
 
+
 // Вспомогательная структура для создания анимаций иконок
 struct AnimatedIconView: View {
     var icon: String
@@ -676,11 +715,13 @@ struct ErrorResponse: Codable {
     let detail: [ErrorDetail]
 }
 
+
 struct ErrorDetail: Codable {
     let loc: [String]
     let msg: String
     let type: String
 }
+
 
 // MARK: - Главный экран приложения
 struct ContentView: View {
@@ -707,6 +748,7 @@ struct ContentView: View {
         }
     }
 }
+
 
 // MARK: - Генератор паролей
 struct AdBannerView: View {
@@ -765,6 +807,8 @@ struct AdBannerView: View {
         .buttonStyle(PlainButtonStyle())
     }
 }
+
+
 // MARK: - Основной экран Генератора паролей
 struct PasswordGeneratorView: View {
     @State private var numberOfPasswords = "1"
@@ -1067,6 +1111,7 @@ struct PasswordGeneratorView: View {
     }
 }
 
+
 // MARK: - Круговая диаграмма силы пароля
 struct CircleChartView: View {
     @Binding var percentage: Double
@@ -1088,6 +1133,7 @@ struct CircleChartView: View {
         }
     }
 }
+
 
 // MARK: - SavePasswordView
 struct SavePasswordView: View {
@@ -1189,6 +1235,7 @@ struct SavePasswordView: View {
     }
 }
 
+
 // Кастомный TextField для улучшения внешнего вида текстовых полей
 struct CustomTextField: View {
     var placeholder: String
@@ -1207,6 +1254,7 @@ struct CustomTextField: View {
     }
 }
 
+
 // MARK: - Отображение сохранённых паролей
 struct SavedPasswordsView: View {
     @EnvironmentObject var authManager: AuthManager
@@ -1219,6 +1267,13 @@ struct SavedPasswordsView: View {
     
     /// Выбранная папка (nil = «Все»)
     @State private var selectedFolderID: UUID? = nil
+    
+    // Храним массив идентификаторов папок (и nil для "Все")
+    // Это удобно для переключения свайпом.
+    private var allFolderIDs: [UUID?] {
+        // Сначала nil («Все»), потом ID каждой папки
+        [nil] + folderManager.folders.map { $0.id }
+    }
     
     var body: some View {
         NavigationView {
@@ -1271,7 +1326,7 @@ struct SavedPasswordsView: View {
                     }
                     .padding(.top, 8)
                     
-                    // Если есть папки, показываем горизонтальный список
+                    // Горизонтальный список папок
                     if !folderManager.folders.isEmpty {
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 10) {
@@ -1283,47 +1338,26 @@ struct SavedPasswordsView: View {
                                 }) {
                                     Text("Все")
                                         .fontWeight(selectedFolderID == nil ? .bold : .regular)
+                                        .foregroundColor(.blue)
                                         .padding(.horizontal, 12)
                                         .padding(.vertical, 6)
-                                        .foregroundColor(
-                                            selectedFolderID == nil
-                                            ? .white
-                                            : .blue
-                                        )
-                                        .background(
-                                            selectedFolderID == nil
-                                            ? Color.blue // Цвет кнопки "Все" при выборе
-                                            : Color.gray.opacity(0.2)
-                                        )
+                                        .background(Color.gray.opacity(0.2))
                                         .cornerRadius(12)
                                 }
                                 
+                                // Каждая папка ОКРАШЕНА в folder.colorHex
                                 ForEach(folderManager.folders) { folder in
-                                    // Каждая папка полностью закрашивается цветом folder.colorHex,
-                                    // если она выбрана, иначе полупрозрачный фон
                                     Button(action: {
                                         withAnimation {
                                             selectedFolderID = folder.id
                                         }
                                     }) {
                                         Text(folder.name)
-                                            .fontWeight(
-                                                selectedFolderID == folder.id
-                                                ? .bold
-                                                : .regular
-                                            )
+                                            .fontWeight(selectedFolderID == folder.id ? .bold : .regular)
+                                            .foregroundColor(.blue)
                                             .padding(.horizontal, 12)
                                             .padding(.vertical, 6)
-                                            .foregroundColor(
-                                                selectedFolderID == folder.id
-                                                ? .white // на выбранной делаем белый текст
-                                                : .blue  // на невыбранной — синий текст
-                                            )
-                                            .background(
-                                                selectedFolderID == folder.id
-                                                ? (Color(hex: folder.colorHex) ?? .gray)
-                                                : Color.gray.opacity(0.2)
-                                            )
+                                            .background(Color(hex: folder.colorHex) ?? .gray)
                                             .cornerRadius(12)
                                     }
                                 }
@@ -1333,7 +1367,9 @@ struct SavedPasswordsView: View {
                         .padding(.top, 8)
                     }
                     
+                    // Основной контент — список паролей
                     if savedPasswords.isEmpty {
+                        // Если паролей нет совсем
                         VStack {
                             Spacer()
                             Image(systemName: "tray")
@@ -1347,6 +1383,7 @@ struct SavedPasswordsView: View {
                             Spacer()
                         }
                     } else {
+                        // Если есть пароли, показываем прокручиваемый список
                         ScrollView {
                             LazyVStack(spacing: 15) {
                                 ForEach(filteredPasswords, id: \.password_name) { password in
@@ -1358,10 +1395,26 @@ struct SavedPasswordsView: View {
                             }
                         }
                         .padding(.top, 3)
+                        // Жест для свайпа влево/вправо
+                        .gesture(
+                            DragGesture(minimumDistance: 20, coordinateSpace: .local)
+                                .onEnded { value in
+                                    let horizontalAmount = value.translation.width
+                                    if abs(horizontalAmount) > 50 {
+                                        if horizontalAmount < 0 {
+                                            // Свайп влево: переходим к следующей папке
+                                            moveToNextFolder()
+                                        } else {
+                                            // Свайп вправо: переходим к предыдущей папке
+                                            moveToPreviousFolder()
+                                        }
+                                    }
+                                }
+                        )
                     }
                 }
                 
-                // Кнопка добавления
+                // Кнопка добавления пароля
                 VStack {
                     Spacer()
                     HStack {
@@ -1385,7 +1438,28 @@ struct SavedPasswordsView: View {
         }
     }
     
-    /// Фильтруем пароли по поиску и по выбранной папке
+    // MARK: - Логика свайпов
+    private func moveToNextFolder() {
+        guard let currentIndex = allFolderIDs.firstIndex(of: selectedFolderID) else { return }
+        let nextIndex = currentIndex + 1
+        if nextIndex < allFolderIDs.count {
+            withAnimation {
+                selectedFolderID = allFolderIDs[nextIndex]
+            }
+        }
+    }
+    
+    private func moveToPreviousFolder() {
+        guard let currentIndex = allFolderIDs.firstIndex(of: selectedFolderID) else { return }
+        let prevIndex = currentIndex - 1
+        if prevIndex >= 0 {
+            withAnimation {
+                selectedFolderID = allFolderIDs[prevIndex]
+            }
+        }
+    }
+    
+    /// Фильтруем пароли по поиску и выбранной папке
     var filteredPasswords: [PasswordData] {
         let resultBySearch: [PasswordData]
         if searchText.isEmpty {
@@ -1397,17 +1471,17 @@ struct SavedPasswordsView: View {
         }
         
         guard let folderID = selectedFolderID else {
-            // Если не выбрана конкретная папка
+            // Если не выбрана папка, показываем все
             return resultBySearch
         }
         
-        // Фильтруем только те пароли, что состоят в этой папке
+        // Оставляем только те пароли, что состоят в выбранной папке
         return resultBySearch.filter { password in
             folderManager.password(password.password_name, isInFolder: folderID)
         }
     }
     
-    // Сохранение нового пароля (пример)
+    // MARK: - Методы сохранения/загрузки
     func savePassword(service: String, email: String, username: String, password: String) {
         guard let url = URL(string: "http://localhost:8000/save_password") else { return }
         
@@ -1447,7 +1521,6 @@ struct SavedPasswordsView: View {
         }.resume()
     }
     
-    // Загрузка паролей
     func loadPasswords() {
         guard let url = URL(string: "http://localhost:8000/get_passwords?seed=\(authManager.seedPhrase)") else { return }
         
@@ -1565,6 +1638,7 @@ struct AddPasswordView: View {
         }
     }
     
+    
     // Кастомный TextField для улучшения внешнего вида текстовых полей
     struct CustomTextField: View {
         var placeholder: String
@@ -1584,52 +1658,72 @@ struct AddPasswordView: View {
     }
 }
 
+
 // MARK: - PasswordCardView с контекстным меню
 struct PasswordCardView: View {
     let password: PasswordData
     @Binding var savedPasswords: [PasswordData]
+
     @State private var isPasswordVisible: Bool = false
     @State private var isCopied: Bool = false
     @State private var showEditPasswordView = false
+
     @EnvironmentObject var authManager: AuthManager
     @EnvironmentObject var folderManager: FolderManager
     
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
+            // Верхняя строка
             HStack {
+                // Показываем все кружочки (по всем папкам)
+                let folderIDs = folderManager.passwordFolderMap[password.password_name] ?? []
+                if !folderIDs.isEmpty {
+                    HStack(spacing: 4) {
+                        ForEach(folderIDs, id: \.self) { folderID in
+                            if let folder = folderManager.folders.first(where: { $0.id == folderID }) {
+                                Circle()
+                                    .fill(Color(hex: folder.colorHex) ?? .gray)
+                                    .frame(width: 14, height: 14)
+                            }
+                        }
+                    }
+                }
+                
                 Text(password.service)
                     .font(.headline)
                     .foregroundColor(Color(.label))
-                Spacer()
                 
+                Spacer()
+
+                // Кнопка "Показать/Скрыть пароль"
                 Button(action: {
-                    withAnimation {
-                        isPasswordVisible.toggle()
-                    }
+                    withAnimation { isPasswordVisible.toggle() }
                 }) {
                     Image(systemName: isPasswordVisible ? "eye.slash" : "eye")
                         .foregroundColor(.blue)
                 }
+                
+                // Кнопка "Скопировать"
                 Button(action: {
                     UIPasteboard.general.string = password.password_value
-                    withAnimation {
-                        isCopied = true
-                    }
+                    withAnimation { isCopied = true }
                     DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                        withAnimation {
-                            isCopied = false
-                        }
+                        withAnimation { isCopied = false }
                     }
                 }) {
                     Image(systemName: "doc.on.doc")
                         .foregroundColor(.blue)
                 }
+                
+                // Кнопка "Редактировать"
                 Button(action: {
                     showEditPasswordView = true
                 }) {
                     Image(systemName: "pencil")
                         .foregroundColor(.orange)
                 }
+                
+                // Кнопка "Удалить"
                 Button(action: {
                     deletePassword()
                 }) {
@@ -1638,6 +1732,7 @@ struct PasswordCardView: View {
                 }
             }
             
+            // Основная информация
             if isPasswordVisible {
                 Text("Login: \(password.email)")
                     .font(.subheadline)
@@ -1652,6 +1747,7 @@ struct PasswordCardView: View {
                     .foregroundColor(Color(.secondaryLabel))
             }
             
+            // Анимация "Скопировано!"
             if isCopied {
                 Text("Скопировано!")
                     .font(.caption)
@@ -1663,30 +1759,43 @@ struct PasswordCardView: View {
         .background(Color(UIColor.secondarySystemBackground))
         .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+        
+        // Окно редактирования
         .sheet(isPresented: $showEditPasswordView) {
             EditPasswordView(
                 isPresented: $showEditPasswordView,
-                password: password,
-                updatePassword: { name, service, email, username, newValue in
-                    updatePassword(passwordName: name, service: service,
-                                   email: email, username: username,
-                                   newPasswordValue: newValue)
-                }
-            )
+                password: password
+            ) { name, service, email, username, newValue in
+                updatePassword(
+                    passwordName: name,
+                    service: service,
+                    email: email,
+                    username: username,
+                    newPasswordValue: newValue
+                )
+            }
         }
+        
+        // Контекстное меню
         .contextMenu {
-            // Список папок: добавить/убрать
-            ForEach(folderManager.folders) { folder in
-                Button(action: {
-                    folderManager.togglePassword(password.password_name, folderID: folder.id)
-                }) {
+            // «Добавить в папку»
+            Menu("Добавить в папку") {
+                ForEach(folderManager.folders) { folder in
                     let isInFolder = folderManager.password(password.password_name, isInFolder: folder.id)
-                    Label(
-                        isInFolder
-                        ? "Убрать из «\(folder.name)»"
-                        : "Добавить в «\(folder.name)»",
-                        systemImage: isInFolder ? "minus.circle" : "plus.circle"
-                    )
+                    
+                    Button(action: {
+                        folderManager.togglePassword(password.password_name, folderID: folder.id)
+                    }) {
+                        // Слева кружочек цвета папки
+                        HStack(spacing: 8) {
+                            Circle()
+                                .fill(Color(hex: folder.colorHex) ?? .gray)
+                                .frame(width: 14, height: 14)
+                            
+                            // Если пароль уже в папке, пишем «Убрать из»
+                            Text(isInFolder ? "Убрать из «\(folder.name)»" : folder.name)
+                        }
+                    }
                 }
             }
         }
@@ -1798,9 +1907,11 @@ struct PasswordCardView: View {
     }
 }
 
+
 struct PasswordsResponse: Codable {
     let passwords: [PasswordData]
 }
+
 
 struct PasswordData: Codable, Equatable {
     let password_name: String
@@ -2058,7 +2169,6 @@ struct BannerView: View {
     }
 }
 
-
 // Всплывающее окно с предупреждением
 struct SaveSeedAlertView: View {
     @Binding var isVisible: Bool
@@ -2212,7 +2322,7 @@ struct SecuritySettingsView: View {
                                             isSeedPhraseVisible = true // Показываем сид-фразу
                                         }
                                     }) {
-                                        Text("Я понял")
+                                        Text("Понятно")
                                             .fontWeight(.bold)
                                             .padding()
                                             .frame(maxWidth: .infinity)
@@ -2336,6 +2446,7 @@ struct SecuritySettingsView: View {
     }
 }
 
+
 struct EditPasswordView: View {
     @Binding var isPresented: Bool
     var password: PasswordData
@@ -2345,9 +2456,16 @@ struct EditPasswordView: View {
     @State private var email: String
     @State private var username: String
     @State private var passwordValue: String
-    @State private var isPasswordVisible = true
+    
+    /// Показывать ли пароль (true) или скрывать (false)
+    @State private var isPasswordVisible = false
+    /// Находится ли экран в режиме редактирования
+    @State private var isEditing = false
 
-    init(isPresented: Binding<Bool>, password: PasswordData, updatePassword: @escaping (String, String, String, String, String) -> Void) {
+    init(isPresented: Binding<Bool>,
+         password: PasswordData,
+         updatePassword: @escaping (String, String, String, String, String) -> Void
+    ) {
         self._isPresented = isPresented
         self.password = password
         self.updatePassword = updatePassword
@@ -2359,88 +2477,166 @@ struct EditPasswordView: View {
 
     var body: some View {
         NavigationView {
-            VStack {
-                VStack {
-                    CustomTextField(placeholder: "Сервис", text: $service)
-                    CustomTextField(placeholder: "Email", text: $email)
-                    CustomTextField(placeholder: "Имя пользователя", text: $username)
-                }
-                .padding()
-                .background(Color(UIColor.systemBackground))
-                .cornerRadius(12)
-                .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
-                .padding([.leading, .trailing], 20)
+            VStack(spacing: 20) {
+                
+                // Поле "Сервис"
+                CustomFieldWithIcon(
+                    iconName: "globe",
+                    placeholder: "Сервис",
+                    text: $service,
+                    isEditing: isEditing
+                )
 
+                // Поле "Email"
+                CustomFieldWithIcon(
+                    iconName: "envelope.fill",
+                    placeholder: "Email",
+                    text: $email,
+                    isEditing: isEditing
+                )
+                
+                // Поле "Имя пользователя"
+                CustomFieldWithIcon(
+                    iconName: "person.fill",
+                    placeholder: "Имя пользователя",
+                    text: $username,
+                    isEditing: isEditing
+                )
+                
+                // Поле "Пароль" с переключением видимости
                 VStack {
                     HStack {
+                        Image(systemName: "key.fill")
+                            .foregroundColor(.gray)
+
                         if isPasswordVisible {
                             TextField("Пароль", text: $passwordValue)
-                                .padding()
-                                .background(Color(UIColor.secondarySystemBackground))
-                                .cornerRadius(8)
+                                .disabled(!isEditing)
                         } else {
                             SecureField("Пароль", text: $passwordValue)
-                                .padding()
-                                .background(Color(UIColor.secondarySystemBackground))
-                                .cornerRadius(8)
+                                .disabled(!isEditing)
                         }
-                        Button(action: { isPasswordVisible.toggle() }) {
+
+                        // Кнопка копирования пароля
+                        Button(action: {
+                            UIPasteboard.general.string = passwordValue
+                        }) {
+                            Image(systemName: "doc.on.doc")
+                                .foregroundColor(.blue)
+                        }
+                        .padding(.trailing, 4)
+
+                        // Кнопка показать/скрыть пароль
+                        Button(action: {
+                            isPasswordVisible.toggle()
+                        }) {
                             Image(systemName: isPasswordVisible ? "eye.slash.fill" : "eye.fill")
                                 .foregroundColor(.blue)
                         }
-                        .padding(.trailing, 5)
                     }
+                    .padding()
+                    .background(Color(UIColor.secondarySystemBackground))
+                    .cornerRadius(8)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color.gray.opacity(0.5), lineWidth: 1)
+                    )
                 }
-                .padding()
-                .background(Color(UIColor.systemBackground))
-                .cornerRadius(12)
-                .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
-                .padding([.leading, .trailing], 20)
+                .padding(.horizontal, 20)
 
                 Spacer()
 
-                Button(action: {
-                    updatePassword(password.password_name, service, email, username, passwordValue)
-                    isPresented = false
-                }) {
-                    Text("Сохранить изменения")
-                        .fontWeight(.bold)
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(Color.blue.opacity(0.2))
-                        .foregroundColor(.blue)
-                        .cornerRadius(12)
-                        .shadow(radius: 5)
-                        .padding([.leading, .trailing], 20)
+                // Если хотите оставить отдельную кнопку "Сохранить изменения":
+                if isEditing {
+                    Button(action: {
+                        // При нажатии сохраняем изменения
+                        updatePassword(
+                            password.password_name,
+                            service,
+                            email,
+                            username,
+                            passwordValue
+                        )
+                        isPresented = false
+                    }) {
+                        Text("Сохранить изменения")
+                            .fontWeight(.bold)
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(Color.blue.opacity(0.2))
+                            .foregroundColor(.blue)
+                            .cornerRadius(12)
+                            .shadow(radius: 5)
+                            .padding([.leading, .trailing], 20)
+                    }
+                    .padding(.bottom, 20)
                 }
-                .padding(.bottom, 20)
             }
             .navigationBarTitle("Редактировать пароль", displayMode: .inline)
-            .navigationBarItems(leading: Button("Отмена") {
-                isPresented = false
-            })
-        }
-    }
-
-    struct CustomTextField: View {
-        var placeholder: String
-        @Binding var text: String
-
-        var body: some View {
-            TextField(placeholder, text: $text)
-                .padding()
-                .background(Color(UIColor.secondarySystemBackground))
-                .cornerRadius(8)
-                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.gray.opacity(0.5), lineWidth: 1))
-                .padding(.bottom, 10)
+            .navigationBarItems(
+                leading: Button("Отмена") {
+                    isPresented = false
+                },
+                trailing: Button(isEditing ? "" : "Изменить") {
+                    if isEditing {
+                        // Сохраняем изменения при нажатии на "Готово"
+                        updatePassword(
+                            password.password_name,
+                            service,
+                            email,
+                            username,
+                            passwordValue
+                        )
+                        isPresented = false
+                    } else {
+                        // Включаем режим редактирования
+                        isEditing.toggle()
+                    }
+                }
+            )
         }
     }
 }
 
+/// Отдельный вью для отображения текстовых полей с иконкой и копированием
+struct CustomFieldWithIcon: View {
+    let iconName: String
+    var placeholder: String
+    @Binding var text: String
+    var isEditing: Bool
+
+    var body: some View {
+        HStack {
+            Image(systemName: iconName)
+                .foregroundColor(.gray)
+
+            TextField(placeholder, text: $text)
+                .disabled(!isEditing)
+
+            // Кнопка копирования значения в буфер
+            Button(action: {
+                UIPasteboard.general.string = text
+            }) {
+                Image(systemName: "doc.on.doc")
+                    .foregroundColor(.blue)
+            }
+            .padding(.trailing, 4)
+        }
+        .padding()
+        .background(Color(UIColor.secondarySystemBackground))
+        .cornerRadius(8)
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(Color.gray.opacity(0.5), lineWidth: 1)
+        )
+        .padding(.horizontal, 20)
+    }
+}
 
 // MARK: - SetPasswordView
 struct SetPasswordView: View {
     @EnvironmentObject var authManager: AuthManager
+    @Environment(\.colorScheme) var colorScheme // Проверка текущей темы
     @Binding var isPresented: Bool
     @State private var firstEntry: [Int] = []
     @State private var secondEntry: [Int] = []
@@ -2457,17 +2653,17 @@ struct SetPasswordView: View {
                 
                 Text(isConfirming ? "Подтвердите новый код-пароль" : "Введите новый код-пароль")
                     .font(.headline)
-                    .foregroundColor(.white)
+                    .foregroundColor(colorScheme == .dark ? .white : .black)
                     .padding(.bottom, 20)
                 
                 HStack(spacing: 10) {
                     ForEach(0..<codeLength, id: \.self) { index in
                         Circle()
                             .frame(width: 15, height: 15)
-                            .foregroundColor((isConfirming ? secondEntry : firstEntry).count > index ? .white : .clear)
+                            .foregroundColor((isConfirming ? secondEntry : firstEntry).count > index ? (colorScheme == .dark ? .white : .black) : .clear)
                             .overlay(
                                 Circle()
-                                    .stroke(Color.white, lineWidth: 1)
+                                    .stroke(colorScheme == .dark ? .white : .black, lineWidth: 1)
                             )
                     }
                 }
@@ -2480,17 +2676,17 @@ struct SetPasswordView: View {
                         HStack(spacing: 15) {
                             ForEach(1...3, id: \.self) { column in
                                 let number = (row - 1) * 3 + column
-                                NumberButton(number: number, action: handleInput)
+                                NumberButton(number: number, action: handleInput, colorScheme: colorScheme)
                             }
                         }
                     }
                     
                     HStack(spacing: 15) {
-                        FaceIDButton(action: { /* Добавьте Face ID обработчик, если нужно */ })
+                        FaceIDButton(action: { /* Добавьте Face ID обработчик, если нужно */ }, colorScheme: colorScheme)
                         
-                        NumberButton(number: 0, action: handleInput)
+                        NumberButton(number: 0, action: handleInput, colorScheme: colorScheme)
                         
-                        DeleteButton(action: deleteLastDigit)
+                        DeleteButton(action: deleteLastDigit, colorScheme: colorScheme)
                     }
                 }
                 .frame(maxWidth: .infinity)
@@ -2499,7 +2695,7 @@ struct SetPasswordView: View {
                 Spacer()
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(LinearGradient(gradient: Gradient(colors: [Color.blue, Color.green]), startPoint: .top, endPoint: .bottom))
+            .background(colorScheme == .dark ? Color.black : Color.white)
             .ignoresSafeArea()
             .alert(isPresented: $showMismatchAlert) {
                 Alert(title: Text("Ошибка"), message: Text("Пароли не совпадают"), dismissButton: .default(Text("Ок")) {
@@ -2590,8 +2786,71 @@ struct SuccessIconView: View {
     }
 }
 
+// MARK: - Number Button
+struct NumberButton: View {
+    let number: Int
+    let action: (Int) -> Void
+    let colorScheme: ColorScheme
+    
+    var body: some View {
+        Button(action: {
+            action(number)
+        }) {
+            Text("\(number)")
+                .font(.title)
+                .foregroundColor(colorScheme == .dark ? .white : .black)
+                .frame(width: 80, height: 80)
+                .background(colorScheme == .dark ? Color.gray.opacity(0.5) : Color.gray.opacity(0.2))
+                .clipShape(Circle())
+                .shadow(radius: 5)
+        }
+    }
+}
+
+// MARK: - Delete Button
+struct DeleteButton: View {
+    let action: () -> Void
+    let colorScheme: ColorScheme
+    
+    var body: some View {
+        Button(action: {
+            action()
+        }) {
+            Text("Удалить")
+                .font(.headline)
+                .foregroundColor(colorScheme == .dark ? .white : .black)
+                .frame(width: 80, height: 80)
+                .background(colorScheme == .dark ? Color.red.opacity(0.5) : Color.red.opacity(0.2))
+                .clipShape(Circle())
+                .shadow(radius: 5)
+        }
+    }
+}
+
+// MARK: - Face ID Button
+struct FaceIDButton: View {
+    let action: () -> Void
+    let colorScheme: ColorScheme
+    
+    var body: some View {
+        Button(action: {
+            action()
+        }) {
+            Image(systemName: "faceid")
+                .font(.largeTitle)
+                .foregroundColor(colorScheme == .dark ? .white : .black)
+                .frame(width: 80, height: 80)
+                .background(colorScheme == .dark ? Color.gray.opacity(0.5) : Color.gray.opacity(0.2))
+                .clipShape(Circle())
+                .shadow(radius: 5)
+        }
+    }
+}
+
+
 struct LockScreenView: View {
     @EnvironmentObject var authManager: AuthManager
+    @Environment(\.colorScheme) var colorScheme // Проверка текущей темы
     @State private var enteredCode: [Int] = []
     @State private var isFaceIDEnabled = true
     @State private var isAnimatingOut = false
@@ -2617,21 +2876,21 @@ struct LockScreenView: View {
             Image(systemName: "lock.fill")
                 .font(.system(size: 40))
                 .padding()
-                .foregroundColor(.white)
+                .foregroundColor(colorScheme == .dark ? .white : .black)
                 .offset(x: shakeOffset)
             
             Text("Приложение заблокировано")
                 .font(.title2)
-                .foregroundColor(.white)
+                .foregroundColor(colorScheme == .dark ? .white : .black)
             
             HStack(spacing: 10) {
                 ForEach(0..<codeLength, id: \.self) { index in
                     Circle()
                         .frame(width: 15, height: 15)
-                        .foregroundColor(index < enteredCode.count ? .white : .clear)
+                        .foregroundColor(index < enteredCode.count ? (colorScheme == .dark ? .white : .black) : .clear)
                         .overlay(
                             Circle()
-                                .stroke(Color.white, lineWidth: 1)
+                                .stroke(colorScheme == .dark ? .white : .black, lineWidth: 1)
                         )
                 }
             }
@@ -2643,27 +2902,27 @@ struct LockScreenView: View {
                     HStack(spacing: 15) {
                         ForEach(1...3, id: \.self) { column in
                             let number = (row - 1) * 3 + column
-                            NumberButton(number: number, action: handleInput)
+                            NumberButton(number: number, action: handleInput, colorScheme: colorScheme)
                         }
                     }
                 }
                 
                 HStack(spacing: 15) {
                     if isFaceIDEnabled {
-                        FaceIDButton(action: authenticateWithFaceID)
+                        FaceIDButton(action: authenticateWithFaceID, colorScheme: colorScheme)
                     } else {
                         Spacer()
                     }
                     
-                    NumberButton(number: 0, action: handleInput)
+                    NumberButton(number: 0, action: handleInput, colorScheme: colorScheme)
                     
-                    DeleteButton(action: deleteLastDigit)
+                    DeleteButton(action: deleteLastDigit, colorScheme: colorScheme)
                 }
             }
             .padding(.bottom, 60)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(LinearGradient(gradient: Gradient(colors: [Color.blue, Color.green]), startPoint: .top, endPoint: .bottom))
+        .background(colorScheme == .dark ? Color.black : Color.white)
         .ignoresSafeArea()
         .offset(y: isAnimatingOut ? -UIScreen.main.bounds.height : 0)
         .opacity(isAnimatingOut ? 0 : 1)
@@ -2725,7 +2984,6 @@ struct LockScreenView: View {
     }
     
     // MARK: - Shake Animation
-    
     private func triggerShakeAnimation() {
         let shakeSequence: [CGFloat] = [-10, 10, -8, 8, -5, 0]
         for (index, offset) in shakeSequence.enumerated() {
@@ -2734,88 +2992,6 @@ struct LockScreenView: View {
                     shakeOffset = offset
                 }
             }
-        }
-    }
-}
-
-struct NumberButton: View {
-    let number: Int
-    let action: (Int) -> Void
-    @State private var isPressed = false
-    
-    var body: some View {
-        Button(action: {
-            action(number)
-        }) {
-            Text("\(number)")
-                .font(.title)
-                .foregroundColor(.white)
-                .frame(width: 80, height: 80)
-                .background(Color.blue.opacity(0.2))
-                .clipShape(Circle())
-                .shadow(radius: 5)
-                .scaleEffect(isPressed ? 0.85 : 1.0) // Глубокое нажатие
-        }
-        .onLongPressGesture(minimumDuration: 0.1, pressing: { pressing in
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.4, blendDuration: 0.2)) {
-                isPressed = pressing
-            }
-        }) {
-            action(number)
-        }
-    }
-}
-
-struct DeleteButton: View {
-    let action: () -> Void
-    @State private var isPressed = false
-    
-    var body: some View {
-        Button(action: {
-            action()
-        }) {
-            Text("Удалить")
-                .font(.headline)
-                .foregroundColor(.white)
-                .frame(width: 80, height: 80)
-                .background(Color.red.opacity(0.2))
-                .clipShape(Circle())
-                .shadow(radius: 5)
-                .scaleEffect(isPressed ? 0.85 : 1.0) // Глубокое нажатие
-        }
-        .onLongPressGesture(minimumDuration: 0.1, pressing: { pressing in
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.4, blendDuration: 0.2)) {
-                isPressed = pressing
-            }
-        }) {
-            action()
-        }
-    }
-}
-
-struct FaceIDButton: View {
-    let action: () -> Void
-    @State private var isPressed = false
-    
-    var body: some View {
-        Button(action: {
-            action()
-        }) {
-            Image(systemName: "faceid")
-                .font(.largeTitle)
-                .foregroundColor(.white)
-                .frame(width: 80, height: 80)
-                .background(Color.blue.opacity(0.2))
-                .clipShape(Circle())
-                .shadow(radius: 5)
-                .scaleEffect(isPressed ? 0.85 : 1.0) // Глубокое нажатие
-        }
-        .onLongPressGesture(minimumDuration: 0.1, pressing: { pressing in
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.4, blendDuration: 0.2)) {
-                isPressed = pressing
-            }
-        }) {
-            action()
         }
     }
 }
@@ -2971,10 +3147,7 @@ struct ManageFoldersView: View {
     @EnvironmentObject var folderManager: FolderManager
     @Environment(\.presentationMode) var presentationMode
 
-    /// Флаг для показа окна «Создать папку»
     @State private var showCreateFolderSheet = false
-
-    /// Папка, которую редактируем (nil — если не редактируем)
     @State private var folderToEdit: Folder? = nil
 
     var body: some View {
@@ -2989,46 +3162,40 @@ struct ManageFoldersView: View {
                 } else {
                     List {
                         ForEach(folderManager.folders) { folder in
-                            // 1) Можно использовать ZStack, чтобы наложить
-                            // скруглённый фон + тень позади содержимого.
                             ZStack(alignment: .leading) {
                                 RoundedRectangle(cornerRadius: 12)
                                     .fill(Color(hex: folder.colorHex) ?? .gray)
                                     .shadow(color: .black.opacity(0.15), radius: 5, x: 0, y: 2)
 
-                                // 2) Вложенный HStack для контента.
+                                // Содержимое карточки
                                 HStack {
                                     Text(folder.name)
                                         .font(.system(size: 17, weight: .bold))
-                                        .foregroundColor(.white)
+                                        .foregroundColor(.black)  // <-- Делаем текст чёрным
                                     Spacer()
 
-                                    // Кнопка «Редактировать»
                                     Button(action: {
                                         folderToEdit = folder
                                     }) {
                                         Image(systemName: "pencil")
-                                            .foregroundColor(.white)
+                                            .foregroundColor(.black) // Иконку тоже делаем чёрной
                                     }
                                     .buttonStyle(PlainButtonStyle())
                                     .padding(.trailing, 8)
 
-                                    // Кнопка «Удалить»
                                     Button(action: {
                                         folderManager.deleteFolder(folder)
                                     }) {
                                         Image(systemName: "trash")
-                                            .foregroundColor(.white)
+                                            .foregroundColor(.red) // Удаление оставим красным
                                     }
                                     .buttonStyle(PlainButtonStyle())
                                 }
-                                .padding() // Отступы внутри карточки
+                                .padding()
                             }
-                            // 3) Убираем стандартный фон и разделители,
-                            // чтобы видеть нашу «карточку».
                             .listRowBackground(Color.clear)
                             .listRowSeparator(.hidden)
-                            .padding(.vertical, 4) // Чтобы карточки не слипались
+                            .padding(.vertical, 4)
                         }
                     }
                     .listStyle(PlainListStyle())
@@ -3040,7 +3207,6 @@ struct ManageFoldersView: View {
                     presentationMode.wrappedValue.dismiss()
                 },
                 trailing: Button(action: {
-                    // Создать новую папку
                     showCreateFolderSheet = true
                 }) {
                     Image(systemName: "plus.circle.fill")
@@ -3048,7 +3214,6 @@ struct ManageFoldersView: View {
                 }
             )
         }
-        // Sheet для СОЗДАНИЯ папки
         .sheet(isPresented: $showCreateFolderSheet) {
             CreateOrEditFolderView(
                 folderToEdit: nil,
@@ -3058,7 +3223,6 @@ struct ManageFoldersView: View {
             )
             .environmentObject(folderManager)
         }
-        // Sheet для РЕДАКТИРОВАНИЯ папки
         .sheet(item: $folderToEdit) { folder in
             CreateOrEditFolderView(
                 folderToEdit: folder,
@@ -3082,10 +3246,10 @@ struct CreateOrEditFolderView: View {
     let onDismiss: () -> Void
 
     @State private var folderName: String = ""
-    @State private var selectedColorHex: String = "#ffffff"
+    @State private var selectedColorHex: String = "#ffd5cd"
 
     let pastelHexColors: [String] = [
-        "#ffffff", "#ffd5cd", "#ffe8cc", "#fff5c6", "#d4f6cc",
+        "#ffd5cd", "#ffe8cc", "#fff5c6", "#d4f6cc",
         "#cffaf8", "#dce8fe", "#f8dcfe", "#ffd7f3", "#e9d7ff",
         "#f2d7d9", "#f3e8cb", "#eaf3d2", "#cce9e4", "#d6dff2", "#f3dae8", "#ffd5e5"
     ]
