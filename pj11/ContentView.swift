@@ -3171,14 +3171,14 @@ struct ManageFoldersView: View {
                                 HStack {
                                     Text(folder.name)
                                         .font(.system(size: 17, weight: .bold))
-                                        .foregroundColor(.black)  // <-- Делаем текст чёрным
+                                        .foregroundColor(.black)  
                                     Spacer()
 
                                     Button(action: {
                                         folderToEdit = folder
                                     }) {
                                         Image(systemName: "pencil")
-                                            .foregroundColor(.black) // Иконку тоже делаем чёрной
+                                            .foregroundColor(.black)
                                     }
                                     .buttonStyle(PlainButtonStyle())
                                     .padding(.trailing, 8)
@@ -3187,7 +3187,7 @@ struct ManageFoldersView: View {
                                         folderManager.deleteFolder(folder)
                                     }) {
                                         Image(systemName: "trash")
-                                            .foregroundColor(.red) // Удаление оставим красным
+                                            .foregroundColor(.red) 
                                     }
                                     .buttonStyle(PlainButtonStyle())
                                 }
@@ -3305,7 +3305,7 @@ struct CreateOrEditFolderView: View {
             }
             .navigationBarItems(
                 leading: Button("Отмена") {
-                    onDismiss()  // Закрываем sheet
+                    onDismiss()  
                 },
                 trailing: Button(folderToEdit == nil ? "Создать" : "Сохранить") {
                     guard !folderName.isEmpty else { return }
